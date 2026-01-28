@@ -15,7 +15,8 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME","devanshikapadiya56@gmail.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD","abcd-efgh-ijkl-mnop")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME",)
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD",)
     # Set to True to print reset links to console instead of sending emails (for development)
     MAIL_USE_CONSOLE = os.environ.get("MAIL_USE_CONSOLE", "True").lower() == "true"
+
