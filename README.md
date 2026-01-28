@@ -1,4 +1,4 @@
-# Mental-Health-Chatbot(Web-based)
+# SoulMate :- Mental-Health-Chatbot(Web-based)
 
 
 This is my final year project at my university
