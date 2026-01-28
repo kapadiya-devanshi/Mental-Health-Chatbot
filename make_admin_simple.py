@@ -12,7 +12,7 @@ app = create_app()
 # ============================================
 USER_EMAIL = ""  # Change this to your user's email
 # OR use username instead:
-# USERNAME = "Devanshi Kapadiya"  # Uncomment and change this if using username
+
 
 def make_admin():
     with app.app_context():
@@ -47,5 +47,6 @@ def make_admin():
 
 if __name__ == '__main__':
     make_admin()
+
 
 
