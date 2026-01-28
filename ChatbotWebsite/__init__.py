@@ -18,7 +18,7 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
     app.static_folder = 'static'
-    app.secret_key = 'super_secret_random_key_12345'  # Change this to something unique and hard to guess
+ 
    
 
     # Initialize the extensions
@@ -44,3 +44,4 @@ def create_app(config_class=Config):
     app.register_blueprint(admin)
 
     return app
+
