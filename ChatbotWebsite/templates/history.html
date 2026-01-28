@@ -1,0 +1,73 @@
+{% extends 'layout.html'%} 
+{%block style%}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/chat.css') }}" />
+<style>
+  .history-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .history-header {
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  .history-messages {
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+</style>
+{%endblock style%}
+
+{% block content%}
+<div class="history-container">
+  <div class="history-header">
+    <h2 class="mb-3">Chat History</h2>
+    <a href="{{url_for('users.account')}}" class="btn btn-outline-secondary btn-sm">
+      ← Back to Account
+    </a>
+  </div>
+  
+  <div class="history-messages">
+    {% if messages %}
+      {%for message in messages%}
+        {%if message.sender == 'user'%}
+        <div class="chat right-msg mb-3">
+          <img src="{{url_for('static',filename='profile_images/'+current_user.profile_image)}}" class="chat-image" />
+          <div class="chat-bubble">
+            <div class="chat-info">
+              <div class="chat-info-name">You</div>
+              <div class="chat-info-time">{{message.timestamp.strftime('%d/%m/%Y, %H:%M')}}</div>
+            </div>
+            <div class="chat-text">
+              {{message.message}}
+            </div>
+          </div>
+        </div>
+        {%else%}
+        <div class="chat left-msg mb-3">
+          <img src="{{url_for('static',filename='images/image.jpg')}}" class="chat-image" />
+          <div class="chat-bubble">
+            <div class="chat-info">
+              <div class="chat-info-name">SoulMate</div>
+              <div class="chat-info-time">{{message.timestamp.strftime('%d/%m/%Y, %H:%M')}}</div>
+            </div>
+            <div class="chat-text">
+              {{message.message}}
+            </div>
+          </div>
+        </div>
+        {%endif%}
+      {%endfor%}
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <p>No chat history found.</p>
+        <p>Start chatting to see your history here!</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{%endblock content%}
+
