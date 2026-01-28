@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Admin Dashboard</h1>
+  <p class="text-muted">Manage all users, their login/register activities, and user data.</p>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Username</th>
+          <th scope="col">Email</th>
+          <th scope="col">Messages</th>
+          <th scope="col">Journals</th>
+          <th scope="col">Last Activity</th>
+          <th scope="col">Admin</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in user_activity %}
+        <tr>
+          <td>{{ item.user.id }}</td>
+          <td>{{ item.user.username }}</td>
+          <td>{{ item.user.email }}</td>
+          <td>{{ item.message_count }}</td>
+          <td>{{ item.journal_count }}</td>
+          <td>
+            {% if item.last_activity %}
+              {{ item.last_activity.strftime("%Y-%m-%d %H:%M") }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {% if item.user.is_admin|default(False) %}
+              <span class="badge bg-success">Admin</span>
+            {% else %}
+              <span class="badge bg-secondary">User</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="btn-group" role="group">
+              <a href="{{ url_for('admin.user_details', user_id=item.user.id) }}" class="btn btn-sm btn-info">View Details</a>
+              {% if item.user.id != current_user.id %}
+              <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=item.user.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to toggle admin status for {{ item.user.username }}?')">
+                  {% if item.user.is_admin|default(False) %}Remove Admin{% else %}Make Admin{% endif %}
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=item.user.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete user {{ item.user.username }}? This action cannot be undone!')">
+                  Delete
+                </button>
+              </form>
+              {% else %}
+              <span class="text-muted small">(You)</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock content %}
+
+
