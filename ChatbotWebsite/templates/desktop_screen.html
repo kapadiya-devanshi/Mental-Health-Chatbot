@@ -1,0 +1,125 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="carousel-container position-relative overflow-hidden w-100" style="height: calc(100vh - 76px); background: var(--bg-color);">
+  
+  <!-- Subtle background glow -->
+  <div class="position-absolute w-100 h-100" style="top: 0; left: 0; pointer-events: none;">
+    <div class="position-absolute rounded-circle" style="width: 800px; height: 800px; background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(255,255,255,0) 70%); top: -20%; right: -10%;"></div>
+    <div class="position-absolute rounded-circle" style="width: 600px; height: 600px; background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(255,255,255,0) 70%); bottom: -20%; left: -10%;"></div>
+  </div>
+
+  <div class="text-center position-absolute w-100 z-1" style="top: 2rem;">
+    <span class="badge rounded-pill fw-medium shadow-sm py-2 px-4" style="background: var(--card-bg); color: #0ea5e9; border: 1px solid var(--border-color); font-size: 0.9rem;">
+      ✨ Community Voices
+    </span>
+  </div>
+
+  <div class="h-100 position-relative z-2">
+    {% if feedbacks %}
+      <div id="feedbackCarousel" class="carousel slide carousel-fade h-100" data-bs-ride="carousel" data-bs-interval="7000">
+        <div class="carousel-inner h-100">
+          {% for feedback in feedbacks %}
+          <div class="carousel-item {% if loop.first %}active{% endif %} h-100">
+            <div class="container h-100 d-flex align-items-center justify-content-center">
+              
+              <!-- Review Card -->
+              <div class="feedback-presentation text-center p-md-5 mx-3" style="max-width: 900px; animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+                
+                <div class="mb-5">
+                  <div class="d-inline-flex px-4 py-2 rounded-pill shadow-sm mb-4" style="background: var(--card-bg); border: 1px solid var(--border-color);">
+                    {% for i in range(1, 6) %}
+                      {% if i <= feedback.rating %}
+                        <span style="color: #fbbf24; font-size: 1.5rem; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); margin: 0 2px;">★</span>
+                      {% else %}
+                        <span style="color: var(--border-color); font-size: 1.5rem; margin: 0 2px;">★</span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                
+                {% if feedback.Notes or feedback.notes %}
+                <div class="mb-5 position-relative">
+                  <span class="position-absolute font-serif" style="font-size: 8rem; color: var(--border-color); opacity: 0.2; top: -4rem; left: -2rem; user-select: none;">"</span>
+                  <h2 class="fw-bold position-relative z-1" style="color: var(--text-color); font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.4; letter-spacing: -0.5px;">
+                    {{ feedback.Notes or feedback.notes }}
+                  </h2>
+                  <span class="position-absolute font-serif" style="font-size: 8rem; color: var(--border-color); opacity: 0.2; bottom: -6rem; right: -2rem; user-select: none;">"</span>
+                </div>
+                {% else %}
+                <div class="mb-5 position-relative">
+                  <h2 class="fw-bold text-muted position-relative z-1" style="font-size: clamp(1.8rem, 4vw, 3rem); font-style: italic;">
+                    User rated {{ feedback.rating }} stars
+                  </h2>
+                </div>
+                {% endif %}
+                
+                <div class="d-inline-flex flex-column align-items-center">
+                  <div class="d-flex justify-content-center align-items-center rounded-circle mb-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; font-size: 1.5rem; font-weight: bold; box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);">
+                    {{ (feedback.user.username|default('A'))[0]|upper }}
+                  </div>
+                  <h5 class="fw-bold mb-1" style="color: var(--text-color);">{{ feedback.user.username if feedback.user else 'Anonymous User' }}</h5>
+                  <p class="text-muted small fw-medium mb-0" style="letter-spacing: 1px; text-transform: uppercase;">{{ feedback.timestamp.strftime('%B %Y') }}</p>
+                </div>
+                
+              </div>
+              
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Custom Controls -->
+        {% if feedbacks|length > 1 %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#feedbackCarousel" data-bs-slide="prev" style="width: 10%; opacity: 1;">
+          <div class="d-flex justify-content-center align-items-center rounded-circle shadow" style="width: 50px; height: 50px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </div>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#feedbackCarousel" data-bs-slide="next" style="width: 10%; opacity: 1;">
+          <div class="d-flex justify-content-center align-items-center rounded-circle shadow" style="width: 50px; height: 50px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </button>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="d-flex align-items-center justify-content-center h-100">
+        <div class="text-center" style="animation: scaleIn 0.5s ease-out;">
+          <div class="d-inline-block bg-light rounded-circle p-4 mb-4" style="background: var(--input-bg) !important;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--border-color);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <h2 class="fw-bold mb-2">No feedback available yet</h2>
+          <p class="text-muted lead">Check back later to see what the community is saying!</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="position-absolute w-100 text-center z-1" style="bottom: 1.5rem;">
+    <p class="text-muted small fw-medium mb-0" style="letter-spacing: 2px;">SOULMATE COMPANION</p>
+  </div>
+</div>
+
+<style>
+  @keyframes scaleIn {
+    0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  
+  .carousel-item {
+    transition: transform .8s cubic-bezier(0.16, 1, 0.3, 1), opacity .8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .carousel-control-prev div, .carousel-control-next div {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .carousel-control-prev:hover div {
+    transform: translateX(-5px) scale(1.05);
+  }
+  
+  .carousel-control-next:hover div {
+    transform: translateX(5px) scale(1.05);
+  }
+</style>
+{% endblock content %}

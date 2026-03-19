@@ -1,0 +1,166 @@
+{% extends 'layout.html' %}
+{% block style %}
+<style>
+  .feedback-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.5rem;
+  }
+
+  .star-rating input {
+    display: none;
+  }
+
+  .star-rating label {
+    cursor: pointer;
+    font-size: 3rem;
+    color: var(--border-color);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1;
+  }
+
+  .star-rating label:hover,
+  .star-rating label:hover ~ label,
+  .star-rating input:checked ~ label {
+    color: #fbbf24;
+    transform: scale(1.15);
+  }
+
+  .notes-textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 1.25rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  }
+
+  .notes-textarea:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+  }
+
+  .feedback-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .feedback-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="feedback-wrapper">
+    
+    <div class="text-center mb-5 pb-3 border-bottom" style="border-color: var(--border-color) !important;">
+      <h1 class="fw-bold fs-1 mb-2">Share Your Experience</h1>
+      <p class="text-muted lead mx-auto" style="max-width: 500px;">We value your input. Help us improve SoulMate by sharing your thoughts.</p>
+    </div>
+
+    <!-- Feedback Form Card -->
+    <div class="card border-0 rounded-4 shadow-sm mb-5" style="background: var(--card-bg);">
+      <div class="card-body p-4 p-md-5">
+        <form method="POST" action="{{ url_for('main.feedback') }}">
+          
+          <div class="text-center mb-5">
+            <label class="form-label d-block fw-bold mb-3 fs-5">How was your stay?</label>
+            <div class="star-rating px-4 py-3 rounded-4" style="background: var(--input-bg); display: inline-flex;">
+              <input type="radio" id="star5" name="rating" value="5" required>
+              <label for="star5" title="Excellent">★</label>
+              
+              <input type="radio" id="star4" name="rating" value="4">
+              <label for="star4" title="Good">★</label>
+              
+              <input type="radio" id="star3" name="rating" value="3">
+              <label for="star3" title="Average">★</label>
+              
+              <input type="radio" id="star2" name="rating" value="2">
+              <label for="star2" title="Poor">★</label>
+              
+              <input type="radio" id="star1" name="rating" value="1">
+              <label for="star1" title="Terrible">★</label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="notes" class="form-label fw-bold mb-2">Additional Notes <span class="text-muted fw-normal">(Optional)</span></label>
+            <textarea class="notes-textarea" id="notes" name="notes" placeholder="What did you like? What can we do better? Let us know..." maxlength="3000"></textarea>
+            <div class="text-end mt-2">
+              <small class="text-muted">Max 3000 characters</small>
+            </div>
+          </div>
+
+          <div class="d-grid mt-4 pt-2">
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-semibold shadow-sm py-3" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6); border: none; letter-spacing: 0.5px;">
+              Submit Feedback
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Published Feedbacks -->
+    {% if published_feedbacks %}
+    <div class="mt-5 pt-4">
+      <div class="d-flex align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Community Reviews</h3>
+        <span class="badge rounded-pill ms-3 fw-medium" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9;">{{ published_feedbacks|length }} Reviews</span>
+      </div>
+      
+      <div class="row g-4">
+        {% for feedback in published_feedbacks %}
+        <div class="col-12 col-md-6">
+          <div class="feedback-card h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center gap-2">
+                <div class="d-flex justify-content-center align-items-center bg-primary text-white rounded-circle fw-bold" style="width: 40px; height: 40px; background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;">
+                  {{ (feedback.user.username if feedback.user else 'A')[0]|upper }}
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-0">{{ feedback.user.username if feedback.user else 'Anonymous' }}</h6>
+                  <span class="text-muted" style="font-size: 0.75rem;">{{ feedback.timestamp.strftime('%b %d, %Y') }}</span>
+                </div>
+              </div>
+              <div class="px-2 py-1 rounded-pill" style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                {% for i in range(5) %}
+                  {% if i < feedback.rating %}
+                    <span style="color: #fbbf24; font-size: 0.85rem;">★</span>
+                  {% else %}
+                    <span style="color: var(--border-color); font-size: 0.85rem;">★</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            
+            {% if feedback.notes %}
+              <hr style="border-color: var(--border-color); opacity: 0.5; margin: 1rem 0;">
+              <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">"{{ feedback.notes }}"</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    
+  </div>
+</div>
+{% endblock content %}

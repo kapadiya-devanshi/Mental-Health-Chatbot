@@ -1,0 +1,129 @@
+{% extends 'layout.html' %} 
+
+{% block style %}
+<style>
+  .about-hero {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 4rem 2rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .about-title {
+    font-weight: 800;
+    font-size: 3rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    letter-spacing: -2px;
+  }
+  
+  .mission-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2.5rem;
+    height: 100%;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(10px);
+  }
+  
+  .mission-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+  
+  .mission-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--primary-gradient);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 fade-in">
+  <div class="about-hero text-center glow-border">
+    <h1 class="about-title">About Soulmate</h1>
+    <p class="text-muted lead mx-auto" style="max-width: 700px;">
+      Your dedicated mental health companion designed to provide reliable information, resources, and support.
+    </p>
+  </div>
+
+  <div class="row align-items-center mb-5 g-5">
+    <div class="col-md-5 text-center">
+      <div class="position-relative d-inline-block">
+        <div class="position-absolute w-100 h-100 rounded-circle" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); filter: blur(20px); opacity: 0.3; top: 0; left: 0;"></div>
+        <img src="{{ url_for('static', filename='images/image.jpg') }}" alt="Mental Health Chatbot Picture"
+          class="rounded-circle position-relative z-1"
+          style="width: 280px; height: 280px; object-fit: cover; border: 4px solid var(--card-bg); box-shadow: var(--shadow-md);" />
+      </div>
+    </div>
+    <div class="col-md-7">
+      <h3 class="fw-bold mb-4">Our Commitment</h3>
+      <p class="fs-5 text-muted mb-4">
+        We understand that seeking help for mental health concerns can be challenging. Our chatbot is designed to
+        make the process as comfortable, accessible, and anonymous as possible.
+      </p>
+      <div class="alert alert-info border-0 rounded-4" style="background: rgba(14, 165, 233, 0.1); color: #0284c7;">
+        <strong>Important Notice:</strong> While SoulMate is here to support you, our chatbot is not a substitute for professional help. If you are experiencing a mental health crisis, please seek immediate help from a mental health professional.
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="mission-card">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 text-primary">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3 class="fw-bold mb-0">Our Mission</h3>
+        </div>
+        <p class="text-muted">
+          We believe that education and awareness are critical components of mental health. Our chatbot aims to provide
+          accurate and up-to-date information on various mental health conditions, including symptoms, causes, and effects. 
+        </p>
+        <p class="text-muted mb-0">
+          We also provide a variety of resources, such as mental health tests and mindfulness exercises, to help you
+          evaluate your mental health and improve your overall wellbeing.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mission-card">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3 text-success">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <h3 class="fw-bold mb-0">Our Team</h3>
+        </div>
+        <p class="text-muted">
+          SoulMate was developed by dedicated students passionate about mental health. We are committed
+          to playing a part in breaking down the stigma surrounding mental health and creating a supportive community.
+        </p>
+        <hr style="border-color: var(--border-color);">
+        <p class="text-muted mb-0">
+          Contact the developers:<br>
+          <strong class="text-body" style="text-color:var(--text-color: #097ef3)">Devanshi Kapadiya & Diya Varsadiya</strong><br>
+          If you have any questions or feedback, we are here to support you every step of the way.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

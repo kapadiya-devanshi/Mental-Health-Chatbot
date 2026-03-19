@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-5 d-flex align-items-center justify-content-center fade-in" style="min-height: calc(100vh - 100px);">
+  <div class="card border-0 overflow-hidden w-100 glow-border"
+    style="max-width: 900px; border-radius: 24px;">
+    <div class="row g-0">
+
+      <!-- Image Left Side -->
+      <div class="col-md-5 d-none d-md-block position-relative"
+        style="background: url('{{ url_for('static', filename='images/login.jpg') }}') center/cover; min-height: 500px;">
+        <div class="position-absolute top-0 start-0 w-100 h-100"
+          style="background: var(--primary-gradient); opacity: 0.6;"></div>
+        <div class="position-absolute bottom-0 start-0 p-4 text-white">
+          <h3 class="fw-bold mb-1" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Welcome Back 💙</h3>
+          <p class="mb-0 opacity-90" style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Login to continue your mental
+            health journey with Soulmate.</p>
+        </div>
+      </div>
+
+      <!-- Login Form Right Side -->
+      <div class="col-md-7 d-flex align-items-center p-4 p-md-5">
+        <div class="w-100 px-xl-4">
+          <div class="text-center mb-5">
+            <h2 class="fw-bold mb-2 gradient-text" style="font-size: 2.2rem;">Sign In</h2>
+            <p class="text-muted">Please enter your credentials to access your account.</p>
+          </div>
+
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+
+            <div class="d-grid gap-4 mb-4">
+              <!-- Email -->
+              <div class="form-group position-relative">
+                <label class="form-label text-muted small fw-bold mb-1">Email Address</label>
+                {% if form.email.errors %}
+                {{ form.email(class="form-control form-control-lg border-danger", placeholder="name@example.com") }}
+                {% for error in form.email.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+                {% else %}
+                {{ form.email(class="form-control form-control-lg border-0 px-4", placeholder="name@example.com",
+                style="background: var(--input-bg); border-radius: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), var(--shadow-sm);")
+                }}
+                {% endif %}
+              </div>
+
+              <!-- Password -->
+              <div class="form-group position-relative">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label text-muted small fw-bold mb-0">Password</label>
+                  <a href="{{ url_for('users.reset_request') }}"
+                    class="text-decoration-none small fw-medium" style="color: #667eea;">Forgot Password?</a>
+                </div>
+                {% if form.password.errors %}
+                {{ form.password(class="form-control form-control-lg border-danger", placeholder="••••••••") }}
+                {% for error in form.password.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+                {% else %}
+                {{ form.password(class="form-control form-control-lg border-0 px-4", placeholder="••••••••",
+                style="background: var(--input-bg); border-radius: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), var(--shadow-sm);")
+                }}
+                {% endif %}
+              </div>
+
+              <!-- Remember Me -->
+              <div class="form-check mt-2">
+                {{ form.remember_me(class="form-check-input", style="cursor:pointer; border-color: #667eea;") }}
+                {{ form.remember_me.label(class="form-check-label text-muted small", style="cursor:pointer; user-select:none;") }}
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid mb-4">
+              {{ form.submit(class="btn btn-primary btn-lg rounded-pill fw-semibold ripple", style="letter-spacing: 0.5px; padding: 14px 28px;") }}
+            </div>
+
+            <!-- Divider -->
+            <div class="d-flex align-items-center justify-content-center mb-4">
+              <div class="flex-grow-1 border-bottom" style="opacity:0.2;"></div>
+              <span class="px-3 text-muted small fw-medium">OR</span>
+              <div class="flex-grow-1 border-bottom" style="opacity:0.2;"></div>
+            </div>
+
+            <!-- Register Link -->
+            <div class="text-center text-muted small">
+              Don't have an account yet?
+              <a href="{{ url_for('users.register') }}" class="text-decoration-none fw-bold ms-1" style="color: #667eea;">Create one now</a>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 pb-3 border-bottom" style="border-color: var(--border-color) !important;">
+    <div>
+      <h1 class="fw-bold fs-2 mb-1">
+        {% if is_admin_view %}
+          User Analytics Report
+        {% else %}
+          My Wellness Report
+        {% endif %}
+      </h1>
+      <p class="text-muted small mb-0">Automated mood & activity analysis based on your recent interactions.</p>
+    </div>
+    <div class="mt-3 mt-md-0 d-flex gap-2">
+      {% if is_admin_view %}
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light rounded-pill px-4 fw-medium shadow-sm">Back to Admin</a>
+        <a href="{{ url_for('admin.analyze_user_pdf', user_id=report.user_id) }}" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm d-flex align-items-center gap-2">
+          <span>📄</span> Download PDF
+        </a>
+      {% else %}
+        <a href="{{ url_for('users.account') }}" class="btn btn-light rounded-pill px-4 fw-medium shadow-sm">Back to Account</a>
+        <a href="{{ url_for('users.analyze_account_pdf') }}" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm d-flex align-items-center gap-2">
+          <span>📄</span> Download PDF
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Top Metrics -->
+  <div class="row g-4 mb-4">
+    <!-- User Info Card -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4 d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+              <span style="font-size: 1.5rem;">👤</span>
+            </div>
+            <div>
+              <h6 class="text-muted mb-0 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Profile Analyzed</h6>
+              <h4 class="fw-bold mb-0 lh-1">{{ report.username }}</h4>
+              {% if is_admin_view %}
+                <span class="badge bg-secondary opacity-75 mt-1 rounded-pill">ID: {{ report.user_id }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <hr style="border-color: var(--border-color); opacity: 0.5;">
+          <div class="d-flex justify-content-between mt-2">
+            <div>
+              <span class="d-block text-muted small fw-bold">Messages</span>
+              <span class="fs-5 fw-bold text-info">{{ report.message_count }}</span>
+            </div>
+            <div>
+              <span class="d-block text-muted small fw-bold">Journals</span>
+              <span class="fs-5 fw-bold text-primary">{{ report.journal_count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Level Card -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" style="background: var(--card-bg);">
+        <!-- Colored Background strip based on risk -->
+        <div class="position-absolute top-0 start-0 w-100" style="height: 6px; 
+          {% if report.risk_level == 'high' %}background-color: #ef4444;
+          {% elif report.risk_level == 'moderate' %}background-color: #f59e0b;
+          {% elif report.risk_level == 'low' %}background-color: #10b981;
+          {% else %}background-color: #6b7280;{% endif %}">
+        </div>
+        <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+          <h6 class="text-muted mb-3 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Estimated Risk Level</h6>
+          <h2 class="fw-bold mb-0 text-capitalize 
+            {% if report.risk_level == 'high' %}text-danger
+            {% elif report.risk_level == 'moderate' %}text-warning
+            {% elif report.risk_level == 'low' %}text-success
+            {% else %}text-secondary{% endif %}" style="font-size: 2.5rem;">
+            {% if report.risk_level == 'high' %}High
+            {% elif report.risk_level == 'moderate' %}Moderate
+            {% elif report.risk_level == 'low' %}Low
+            {% else %}Unknown{% endif %}
+          </h2>
+          <p class="text-muted small mt-2 mb-0 px-3">Based on automated sentiment tracking across all activity.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stability Score Card -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+          <h6 class="text-muted mb-3 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Emotional Stability Score</h6>
+          <div class="position-relative d-inline-block mx-auto mb-2">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <!-- Background circle -->
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+              <!-- Progress circle -->
+              {% set stability_pct = (report.stability_score / 10) * 100 %}
+              {% set circumference = 2 * 3.14159 * 40 %}
+              {% set offset = circumference - (stability_pct / 100) * circumference %}
+              <circle cx="50" cy="50" r="40" fill="none" 
+                stroke="{% if report.stability_score >= 7 %}#10b981{% elif report.stability_score >= 4 %}#f59e0b{% else %}#ef4444{% endif %}" 
+                stroke-width="8" 
+                stroke-linecap="round"
+                stroke-dasharray="{{ circumference }}"
+                stroke-dashoffset="{{ offset }}"
+                transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="position-absolute top-50 start-50 translate-middle">
+              <span class="fw-bold" style="font-size: 2rem; color: {% if report.stability_score >= 7 %}#10b981{% elif report.stability_score >= 4 %}#f59e0b{% else %}#ef4444{% endif %}">{{ report.stability_score }}</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">1-10 scale based on emotional consistency</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sentiment Tally Card -->
+    <div class="col-md-6 col-lg-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4">
+          <h6 class="text-muted mb-3 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Sentiment Tally</h6>
+          {% set tally = report.sentiment_tally %}
+          {% set total = tally.positive + tally.negative + tally.neutral %}
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold text-success">😊 Positive</span>
+              <span class="small fw-bold">{{ tally.positive }} {% if total > 0 %}({{ '%.0f'|format((tally.positive / total) * 100) }}%){% endif %}</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px;">
+              <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {% if total > 0 %}{{ (tally.positive / total) * 100 }}{% else %}0{% endif %}%"></div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold text-danger">😔 Negative</span>
+              <span class="small fw-bold">{{ tally.negative }} {% if total > 0 %}({{ '%.0f'|format((tally.negative / total) * 100) }}%){% endif %}</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px;">
+              <div class="progress-bar bg-danger rounded-pill" role="progressbar" style="width: {% if total > 0 %}{{ (tally.negative / total) * 100 }}{% else %}0{% endif %}%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold text-info">😐 Neutral</span>
+              <span class="small fw-bold">{{ tally.neutral }} {% if total > 0 %}({{ '%.0f'|format((tally.neutral / total) * 100) }}%){% endif %}</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px;">
+              <div class="progress-bar bg-info rounded-pill" role="progressbar" style="width: {% if total > 0 %}{{ (tally.neutral / total) * 100 }}{% else %}0{% endif %}%"></div>
+            </div>
+          </div>
+          
+          <div class="mt-3 pt-2 border-top" style="border-color: var(--border-color) !important;">
+            <span class="small text-muted">Total Interactions: <strong>{{ total }}</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Mental State & Suggestions -->
+    <div class="col-lg-7">
+      <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: var(--card-bg);">
+        <div class="card-body p-4 p-md-5">
+          <div class="d-flex align-items-center mb-4">
+            <div class="bg-primary bg-opacity-10 p-2 rounded me-3 text-primary">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <h5 class="fw-bold mb-0">Mental State Summary</h5>
+          </div>
+          <p class="fs-5 lh-lg mb-0 text-muted" style="color: var(--text-color) !important;">
+            {{ report.mental_state_summary }}
+          </p>
+        </div>
+      </div>
+
+      <div class="card border-0 rounded-4 shadow-sm" style="background: var(--card-bg);">
+        <div class="card-body p-4 p-md-5">
+          <div class="d-flex align-items-center mb-4">
+            <div class="bg-success bg-opacity-10 p-2 rounded me-3 text-success">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <h5 class="fw-bold mb-0">Supportive Suggestions</h5>
+          </div>
+          
+          {% if report.suggestions %}
+            <ul class="list-group list-group-flush border-0">
+              {% for item in report.suggestions %}
+                <li class="list-group-item bg-transparent px-0 py-3 border-bottom text-muted" style="border-color: var(--border-color) !important;">
+                  <div class="d-flex align-items-start">
+                    <span class="text-success me-3 mt-1">✓</span>
+                    <span style="font-size: 1.05rem; line-height: 1.5; color: var(--text-color);">{{ item }}</span>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-center py-4 bg-light rounded-4" style="background: var(--input-bg) !important;">
+               <p class="text-muted mb-0">No specific suggestions available. Encourage regular journaling and open conversations.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Journal Mood Breakdown -->
+    <div class="col-lg-5">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4 p-md-5">
+          <h5 class="fw-bold mb-4">Mood Frequency</h5>
+          
+          {% if report.journal_mood_counts %}
+            <div class="p-4 rounded-4 mb-4 text-center" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.1)); border: 1px solid var(--border-color);">
+              <h6 class="text-muted fw-bold mb-1" style="font-size: 0.8rem; letter-spacing: 1px;">DOMINANT MOOD</h6>
+              <h3 class="fw-bold mb-0" style="color: #0ea5e9;">{{ report.dominant_journal_mood }}</h3>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0">
+                <tbody>
+                  {% for mood, count in report.journal_mood_counts.items() %}
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                      <td class="ps-0 py-3">
+                        <div class="d-flex align-items-center">
+                          <span class="d-inline-block rounded-circle bg-primary me-3" style="width: 10px; height: 10px;"></span>
+                          <span class="fw-semibold">{{ mood }}</span>
+                        </div>
+                      </td>
+                      <td class="text-end pe-0 py-3">
+                        <span class="badge bg-light text-muted rounded-pill px-3 py-2 border shadow-sm" style="font-size: 0.9rem;">{{ count }} Entries</span>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <div class="bg-light rounded-circle p-4 d-inline-block mb-3" style="background: var(--input-bg) !important;">
+                <span style="font-size: 2rem; opacity: 0.5;">📓</span>
+              </div>
+              <p class="text-muted mb-0">No journal mood data available yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}

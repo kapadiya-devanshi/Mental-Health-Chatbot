@@ -1,0 +1,89 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container py-5 fade-in">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 pb-3">
+    <div>
+      <h1 class="fw-bold mb-1 gradient-text" style="font-size: 2.2rem;">Share Your Experiences</h1>
+      <p class="text-muted mb-0">Track your moods and thoughts over time.</p>
+    </div>
+    <div class="mt-3 mt-md-0">
+      <a class="btn btn-primary rounded-pill px-4 py-2 fw-semibold ripple" href="{{ url_for('journals.new_journal') }}">
+        <span>+</span> New Entry
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    {% if not journals.items %}
+      <div class="col-12 text-center py-5">
+        <div class="d-inline-flex bg-light rounded-circle p-4 mb-3" style="background: var(--input-bg) !important;">
+          <span style="font-size: 2.5rem;">✍️</span>
+        </div>
+        <h4 class="fw-bold">No entries yet</h4>
+        <p class="text-muted mx-auto" style="max-width: 400px;">Start your journaling journey today by writing down how you feel.</p>
+      </div>
+    {% else %}
+      {% for journal in journals.items %}
+        <div class="col-12 col-xl-10">
+          <div class="card border-0 rounded-4 shadow-sm" style="background: var(--card-bg); transition: transform 0.2s; cursor: pointer;" onclick="window.location='{{ url_for('journals.journal', journal_id=journal.id) }}'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge rounded-pill fw-medium" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                    Mood: {{ journal.mood }}
+                  </span>
+                  <span class="text-muted small fw-medium">{{ journal.timestamp.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div>
+                  <a href="{{ url_for('journals.journal', journal_id=journal.id) }}" class="btn btn-light btn-sm rounded-circle p-2 text-muted" aria-label="View Entry" onclick="event.stopPropagation();">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </a>
+                </div>
+              </div>
+              
+              <p class="text-truncate mb-0" style="color: var(--text-color); font-size: 1rem; line-height: 1.6; max-height: 3.2rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal;">
+                {{ journal.content }}
+              </p>
+              
+              <hr style="border-color: var(--border-color); opacity: 0.5; margin: 1rem 0;">
+              
+              <div class="d-flex align-items-center">
+                <img src="{{ url_for('static', filename='profile_images/' + current_user.profile_image) }}" alt="avatar" class="rounded-circle me-2 border" style="width: 32px; height: 32px; object-fit: cover; border-color: var(--border-color) !important;">
+                <div class="d-flex flex-column">
+                  <span class="fw-semibold small" style="line-height: 1;">{{ journal.user.username }}</span>
+                  <span class="text-muted" style="font-size: 0.7rem;">{{ journal.timestamp.strftime('%H:%M %p') }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Pagination -->
+  {% if journals.pages > 1 %}
+  <div class="d-flex justify-content-center mt-5">
+    <nav aria-label="Journal pagination">
+      <ul class="pagination pagination-sm gap-1">
+        {% for page_num in journals.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_num %}
+            {% if journals.page == page_num %}
+              <li class="page-item active">
+                <span class="page-link rounded-pill border-0 fw-bold shadow-sm" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); color: white; padding: 0.4rem 0.9rem;">{{ page_num }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link rounded-pill border-0 bg-transparent text-muted fw-medium" href="{{ url_for('journals.all_journals', page=page_num) }}" style="padding: 0.4rem 0.9rem;">{{ page_num }}</a>
+              </li>
+            {% endif %}
+          {% else %}
+            <li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted">...</span></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}

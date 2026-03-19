@@ -1,0 +1,141 @@
+{% extends 'layout.html' %} 
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/chat.css') }}" />
+<style>
+  .history-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .history-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 650px;
+  }
+
+  .history-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem 2rem;
+    z-index: 10;
+  }
+
+  .history-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: var(--body-bg); /* Use the body gradient or solid */
+  }
+
+  .history-messages::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .history-messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .history-messages::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.3);
+    border-radius: 4px;
+  }
+  
+  /* Make sure the chat bubbles from chat.css map cleanly here */
+  .chat { margin-bottom: 1rem; animation: fadeIn 0.4s ease; }
+  .chat-bubble { font-size: 0.95rem; line-height: 1.5; padding: 14px 18px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  .right-msg .chat-bubble { border-bottom-right-radius: 4px; }
+  .left-msg .chat-bubble { border-bottom-left-radius: 4px; }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="history-wrapper">
+    
+    <div class="history-container">
+      
+      <!-- Sticky Header -->
+      <div class="history-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+          <a href="{{ url_for('users.account') }}" class="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 40px; height: 40px; border-color: var(--border-color);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </a>
+          <div>
+            <h4 class="fw-bold mb-0 lh-1">Conversation History</h4>
+            <p class="text-muted small mb-0 mt-1">Your past chats with SoulMate</p>
+          </div>
+        </div>
+        <div>
+          <span class="badge rounded-pill fw-medium" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+            Read-Only
+          </span>
+        </div>
+      </div>
+      
+      <!-- Scrollable Message Content -->
+      <div class="history-messages" id="history-scroll-area">
+        {% if messages %}
+          {% for message in messages %}
+            {% if message.sender == 'user' %}
+            <div class="chat right-msg">
+              <img src="{{ url_for('static', filename='profile_images/' + current_user.profile_image) }}" class="chat-image shadow-sm border" style="border-color: var(--border-color) !important;" />
+              <div class="chat-bubble">
+                <div class="chat-info">
+                  <div class="chat-info-name">You</div>
+                  <div class="chat-info-time">{{ message.timestamp.strftime('%B %d, %H:%M') }}</div>
+                </div>
+                <div class="chat-text">
+                  {{ message.message }}
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="chat left-msg">
+              <img src="{{ url_for('static', filename='images/image.jpg') }}" class="chat-image shadow-sm border" style="border-color: var(--border-color) !important;" />
+              <div class="chat-bubble">
+                <div class="chat-info">
+                  <div class="chat-info-name fw-bold" style="color: #0ea5e9;">SoulMate</div>
+                  <div class="chat-info-time">{{ message.timestamp.strftime('%B %d, %H:%M') }}</div>
+                </div>
+                <div class="chat-text">
+                  {{ message.message }}
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+          <div class="text-center mt-4">
+            <span class="text-muted small px-3 py-1 rounded-pill" style="background: var(--border-color); opacity: 0.7;">End of History</span>
+          </div>
+        {% else %}
+          <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted" style="opacity: 0.6;">
+            <div class="bg-light rounded-circle p-4 mb-3" style="background: var(--input-bg) !important;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <h5>No chat history found.</h5>
+            <p class="small text-center max-w-75">Start a conversation with SoulMate to see your history appear here.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<script>
+  // Auto-scroll to bottom of history
+  document.addEventListener("DOMContentLoaded", function() {
+    let scrollArea = document.getElementById("history-scroll-area");
+    if (scrollArea) {
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    }
+  });
+</script>
+{% endblock content %}
