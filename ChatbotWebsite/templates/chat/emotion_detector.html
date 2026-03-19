@@ -1,0 +1,357 @@
+<!-- Facial Emotion Detection Modal -->
+<div class="modal fade" id="emotionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+      <!-- Header -->
+      <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h5 class="modal-title text-white fw-bold">
+          <i class="fas fa-smile-beam me-2"></i>Mood Detection
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Body -->
+      <div class="modal-body p-4">
+        <!-- Webcam Container -->
+        <div class="webcam-container position-relative mb-4" style="border-radius: 16px; overflow: hidden; background: #f3f4f6;">
+          <video id="webcam-video" autoplay playsinline style="width: 100%; height: 300px; object-fit: cover; transform: scaleX(-1);"></video>
+          <canvas id="webcam-canvas" style="display: none;"></canvas>
+          
+          <!-- Loading Overlay -->
+          <div id="emotion-loading" class="position-absolute top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center" style="background: rgba(0,0,0,0.7);">
+            <div class="text-center">
+              <div class="spinner-border text-light mb-2" role="status"></div>
+              <p class="text-white mb-0">Analyzing your mood...</p>
+            </div>
+          </div>
+          
+          <!-- Placeholder when camera is off -->
+          <div id="camera-placeholder" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+            <div class="text-center text-muted">
+              <i class="fas fa-camera fa-3x mb-3"></i>
+              <p class="mb-0">Click "Start Camera" to begin</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Emotion Result -->
+        <div id="emotion-result" class="d-none">
+          <div class="text-center mb-4">
+            <div id="emotion-icon" class="display-4 mb-2">😐</div>
+            <h4 id="emotion-text" class="fw-bold mb-1">Neutral</h4>
+            <p id="emotion-confidence" class="text-muted small mb-0">Confidence: 85%</p>
+          </div>
+          
+          <div id="emotion-message" class="alert border-0" style="background: rgba(102, 126, 234, 0.1); border-radius: 12px;">
+            <i class="fas fa-info-circle me-2 text-primary"></i>
+            <span id="emotion-suggestion">How are you feeling today? I'm here to chat whenever you're ready.</span>
+          </div>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="emotion-error" class="alert alert-danger d-none">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <span id="error-text">Unable to access camera. Please check permissions.</span>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="modal-footer border-0 justify-content-center gap-2 pb-4">
+        <button type="button" id="start-camera-btn" class="btn btn-primary px-4" style="border-radius: 25px;">
+          <i class="fas fa-video me-2"></i>Start Camera
+        </button>
+        <button type="button" id="capture-emotion-btn" class="btn btn-success px-4 d-none" style="border-radius: 25px;">
+          <i class="fas fa-camera me-2"></i>Detect Mood
+        </button>
+        <button type="button" id="use-emotion-btn" class="btn btn-outline-primary px-4 d-none" style="border-radius: 25px;" data-bs-dismiss="modal">
+          <i class="fas fa-check me-2"></i>Use This Mood
+        </button>
+        <button type="button" id="stop-camera-btn" class="btn btn-outline-danger px-4 d-none" style="border-radius: 25px;">
+          <i class="fas fa-stop me-2"></i>Stop
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Emotion Detection Button (Floating) -->
+<button type="button" id="emotion-detector-btn" class="btn btn-light rounded-circle shadow-sm position-fixed" 
+        style="bottom: 100px; right: 20px; width: 56px; height: 56px; z-index: 1000; border: 2px solid rgba(102, 126, 234, 0.3);"
+        data-bs-toggle="modal" data-bs-target="#emotionModal" title="Detect My Mood">
+  <span class="fs-4">😮</span>
+</button>
+
+<style>
+/* Emotion-specific styles */
+.emotion-happy { color: #22c55e; }
+.emotion-sad { color: #3b82f6; }
+.emotion-angry { color: #ef4444; }
+.emotion-fear { color: #a855f7; }
+.emotion-surprise { color: #f59e0b; }
+.emotion-disgust { color: #84cc16; }
+.emotion-neutral { color: #6b7280; }
+
+/* Pulse animation for emotion button */
+@keyframes emotionPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+}
+
+#emotion-detector-btn:hover {
+  animation: emotionPulse 1s ease infinite;
+}
+</style>
+
+<script>
+// Emotion Detection JavaScript
+(function() {
+  let stream = null;
+  let video = document.getElementById('webcam-video');
+  let canvas = document.getElementById('webcam-canvas');
+  let startBtn = document.getElementById('start-camera-btn');
+  let stopBtn = document.getElementById('stop-camera-btn');
+  let captureBtn = document.getElementById('capture-emotion-btn');
+  let useEmotionBtn = document.getElementById('use-emotion-btn');
+  let loadingOverlay = document.getElementById('emotion-loading');
+  let resultDiv = document.getElementById('emotion-result');
+  let errorDiv = document.getElementById('emotion-error');
+  let placeholderDiv = document.getElementById('camera-placeholder');
+  
+  let currentEmotion = null;
+  let currentEmotionData = null;
+  
+  // Start camera
+  startBtn.addEventListener('click', async function() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        } 
+      });
+      
+      video.srcObject = stream;
+      
+      video.onloadedmetadata = function() {
+        placeholderDiv.classList.add('d-none');
+        startBtn.classList.add('d-none');
+        stopBtn.classList.remove('d-none');
+        captureBtn.classList.remove('d-none');
+        resultDiv.classList.add('d-none');
+        errorDiv.classList.add('d-none');
+      };
+    } catch (err) {
+      console.error('Camera error:', err);
+      errorDiv.classList.remove('d-none');
+      let errorMsg = 'Unable to access camera.';
+      if (err.name === 'NotAllowedError') {
+        errorMsg = 'Camera access denied. Please allow camera permissions in your browser settings.';
+      } else if (err.name === 'NotFoundError') {
+        errorMsg = 'No camera found. Please connect a webcam.';
+      } else if (err.name === 'NotReadableError') {
+        errorMsg = 'Camera is already in use by another application.';
+      } else {
+        errorMsg = 'Unable to access camera. Please allow camera permissions.';
+      }
+      document.getElementById('error-text').textContent = errorMsg;
+    }
+  });
+  
+  // Stop camera
+  stopBtn.addEventListener('click', function() {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    
+    placeholderDiv.classList.remove('d-none');
+    startBtn.classList.remove('d-none');
+    stopBtn.classList.add('d-none');
+    captureBtn.classList.add('d-none');
+    useEmotionBtn.classList.add('d-none');
+    resultDiv.classList.add('d-none');
+  });
+  
+  // Capture and detect emotion
+  captureBtn.addEventListener('click', async function() {
+    if (!stream) return;
+    
+    // Show loading
+    loadingOverlay.classList.remove('d-none');
+    loadingOverlay.classList.add('d-flex');
+    
+    try {
+      // Draw video frame to canvas
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to base64
+      let imageData = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Send to server
+      let response = await fetch('/detect_emotion', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ image: imageData })
+      });
+      
+      // Check if server is running
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Endpoint not found. Please restart the server.');
+        } else if (response.status === 500) {
+          throw new Error('Server internal error. Check server console logs.');
+        } else if (response.status === 503) {
+          // Service unavailable - emotion detection not available
+          const result = await response.json();
+          if (result.error && result.error.includes('not available')) {
+            // Still return the fallback neutral emotion
+            currentEmotion = result.emotion;
+            currentEmotionData = result;
+            displayEmotionResult(result);
+            useEmotionBtn.classList.remove('d-none');
+            return;
+          }
+        }
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Server returned non-JSON response:', text.substring(0, 500));
+        
+        // Try to extract error message from HTML
+        let errorMsg = 'Server error: Received HTML instead of JSON. Please make sure the Flask server is running.';
+        if (text.includes('ModuleNotFoundError')) {
+          errorMsg = 'Server error: Required module not found. Please install dependencies: pip install opencv-python deepface';
+        } else if (text.includes('ImportError')) {
+          errorMsg = 'Server error: Import error. Please check server logs and install missing dependencies.';
+        } else if (text.includes('Traceback')) {
+          errorMsg = 'Server error: Python exception occurred. Check server console for details.';
+        } else if (text.includes('Not Found') || text.includes('404')) {
+          errorMsg = 'Server error: Endpoint not found. Please restart the Flask server.';
+        }
+        
+        throw new Error(errorMsg);
+      }
+      
+      let result = await response.json();
+      
+      if (result.success) {
+        currentEmotion = result.emotion;
+        currentEmotionData = result;
+        
+        // Update UI
+        displayEmotionResult(result);
+        
+        // Show use emotion button
+        useEmotionBtn.classList.remove('d-none');
+        
+        // Show note if face wasn't detected clearly
+        if (!result.face_detected && result.note) {
+          console.log('Note:', result.note);
+          // Optionally show a warning but still allow using the neutral emotion
+          let noteDiv = document.createElement('div');
+          noteDiv.className = 'alert alert-warning mt-2 py-2 px-3';
+          noteDiv.style.fontSize = '0.85rem';
+          noteDiv.innerHTML = `<i class="fas fa-info-circle me-2"></i>${result.note}`;
+          resultDiv.appendChild(noteDiv);
+          
+          // Remove note after 5 seconds
+          setTimeout(() => {
+            if (noteDiv.parentNode) noteDiv.remove();
+          }, 5000);
+        }
+      } else {
+        throw new Error(result.error || 'Detection failed');
+      }
+    } catch (err) {
+      console.error('Detection error:', err);
+      errorDiv.classList.remove('d-none');
+      document.getElementById('error-text').textContent = 'Error: ' + (err.message || 'Could not detect emotion. Please make sure your face is visible and well-lit.');
+    } finally {
+      loadingOverlay.classList.add('d-none');
+      loadingOverlay.classList.remove('d-flex');
+    }
+  });
+  
+  // Display emotion result
+  function displayEmotionResult(result) {
+    let context = result.context;
+    
+    document.getElementById('emotion-icon').textContent = context.icon;
+    document.getElementById('emotion-text').textContent = result.emotion.charAt(0).toUpperCase() + result.emotion.slice(1);
+    document.getElementById('emotion-confidence').textContent = `Confidence: ${result.confidence}%`;
+    document.getElementById('emotion-suggestion').textContent = context.message;
+    
+    // Apply color
+    let emotionClass = `emotion-${result.emotion.toLowerCase()}`;
+    document.getElementById('emotion-text').className = `fw-bold mb-1 ${emotionClass}`;
+    
+    resultDiv.classList.remove('d-none');
+    errorDiv.classList.add('d-none');
+  }
+  
+  // Use detected emotion in chat
+  useEmotionBtn.addEventListener('click', function() {
+    if (currentEmotion && currentEmotionData) {
+      // Store in session storage for chat to use
+      sessionStorage.setItem('detected_emotion', currentEmotion);
+      sessionStorage.setItem('emotion_data', JSON.stringify(currentEmotionData));
+      
+      // Trigger event for chat
+      window.dispatchEvent(new CustomEvent('emotionDetected', { 
+        detail: currentEmotionData 
+      }));
+      
+      // Add emotion indicator to chat input
+      let textInput = document.getElementById('textInput');
+      if (textInput && currentEmotionData.context) {
+        let placeholder = `I'm feeling ${currentEmotion.toLowerCase()}...`;
+        textInput.placeholder = placeholder;
+        textInput.dataset.detectedEmotion = currentEmotion;
+      }
+    }
+    
+    // Stop camera
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    
+    // Reset UI
+    placeholderDiv.classList.remove('d-none');
+    startBtn.classList.remove('d-none');
+    stopBtn.classList.add('d-none');
+    captureBtn.classList.add('d-none');
+    useEmotionBtn.classList.add('d-none');
+    resultDiv.classList.add('d-none');
+  });
+  
+  // Reset when modal is closed
+  document.getElementById('emotionModal').addEventListener('hidden.bs.modal', function() {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    
+    placeholderDiv.classList.remove('d-none');
+    startBtn.classList.remove('d-none');
+    stopBtn.classList.add('d-none');
+    captureBtn.classList.add('d-none');
+    useEmotionBtn.classList.add('d-none');
+    resultDiv.classList.add('d-none');
+    errorDiv.classList.add('d-none');
+  });
+})();
+</script>

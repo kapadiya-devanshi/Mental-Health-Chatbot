@@ -1,0 +1,736 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript">
+  //components in html
+  const msgerForm = get(".chat-inputarea");
+  const msgerInput = get(".chat-input");
+  const msgerChat = get(".main-chat");
+
+  //images and name for bot and user
+  const BOT_IMG = "static/images/image.jpg";
+  const BOT_NAME = "SoulMate";
+  const USER_NAME = "You";
+  let image_file = $("#message-form").attr("image_file");
+  let USER_IMG = "static/profile_images/" + image_file;
+
+  // Voice recognition setup
+  let recognition = null;
+  let isListening = false;
+
+  // Supported languages for voice input
+  const VOICE_LANGUAGES = {
+    'en-US': 'English',
+    'hi-IN': 'Hindi',
+    'gu-IN': 'Gujarati'
+  };
+
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    // Set initial language from dropdown
+    const langSelect = document.getElementById('mic-language');
+    recognition.lang = langSelect ? langSelect.value : 'en-US';
+
+    // Update language when dropdown changes
+    if (langSelect) {
+      langSelect.addEventListener('change', function() {
+        if (recognition) {
+          recognition.lang = this.value;
+          console.log('Voice recognition language changed to:', VOICE_LANGUAGES[this.value]);
+        }
+      });
+    }
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      $("#textInput").val($("#textInput").val() + transcript);
+      isListening = false;
+      $("#mic-icon").text("🎤");
+      $("#mic-button").removeClass("btn-danger").addClass("btn-outline-info");
+      
+      // Show language indicator
+      const currentLang = VOICE_LANGUAGES[recognition.lang] || 'English';
+      showLanguageIndicator(currentLang);
+    };
+
+    recognition.onerror = function (event) {
+      console.error('Speech recognition error:', event.error);
+      isListening = false;
+      $("#mic-icon").text("🎤");
+      $("#mic-button").removeClass("btn-danger").addClass("btn-outline-info");
+      
+      // Show error message for unsupported language
+      if (event.error === 'language-not-supported') {
+        alert('Voice recognition for the selected language is not supported on your browser. Please try a different language or use text input.');
+      }
+    };
+
+    recognition.onend = function () {
+      isListening = false;
+      $("#mic-icon").text("🎤");
+      $("#mic-button").removeClass("btn-danger").addClass("btn-outline-info");
+    };
+  }
+
+  // Show language indicator
+  function showLanguageIndicator(language) {
+    // Remove existing indicator
+    const existingIndicator = document.getElementById('voice-lang-indicator');
+    if (existingIndicator) {
+      existingIndicator.remove();
+    }
+    
+    // Create new indicator
+    const indicator = document.createElement('div');
+    indicator.id = 'voice-lang-indicator';
+    indicator.style.cssText = `
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      z-index: 1000;
+      animation: fadeInOut 2s ease forwards;
+    `;
+    indicator.textContent = `🎤 Voice: ${language}`;
+    document.body.appendChild(indicator);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+      if (indicator.parentNode) {
+        indicator.remove();
+      }
+    }, 2000);
+  }
+
+  // On-demand TTS function
+  function listenMessage(btn) {
+    if (!window.speechSynthesis) return;
+    const synth = window.speechSynthesis;
+
+    // Check if clicking stop
+    if (btn.classList.contains('speaking')) {
+      synth.cancel();
+      btn.classList.remove('speaking');
+      btn.innerText = '🔊';
+      return;
+    }
+
+    // Stop any ongoing speech first
+    if (synth.speaking) {
+      synth.cancel();
+      document.querySelectorAll('.listen-btn.speaking').forEach(b => {
+        b.classList.remove('speaking');
+        b.innerText = '🔊';
+      });
+    }
+
+    // Find the text to read
+    const bubble = btn.closest('.chat-bubble');
+    const textDiv = bubble.querySelector('.chat-text');
+    let textToRead = "";
+
+    if (textDiv) {
+      // Just extract text, skipping HTML tags
+      textToRead = textDiv.innerText.replace(/<[^>]*>?/gm, '');
+    } else {
+      // For tests, read the title and questions
+      let title = bubble.querySelector('h5');
+      if (title) textToRead += title.innerText + ". ";
+      let questions = bubble.querySelectorAll('.test-questions > div:not(.options)');
+      questions.forEach(q => textToRead += q.innerText + ". ");
+    }
+
+    if (!textToRead.trim()) return;
+
+    const utterThis = new SpeechSynthesisUtterance(textToRead);
+    utterThis.lang = 'en-US';
+
+    // Try to securely find a female voice
+    const voices = synth.getVoices();
+    let femaleVoice = voices.find(voice => {
+      const name = voice.name.toLowerCase();
+      // look for female identifiers
+      return name.includes('female') ||
+        name.includes('zira') ||
+        name.includes('samantha') ||
+        name.includes('victoria') ||
+        name.includes('susan') ||
+        name.includes('karen') ||
+        name.includes('tessa') ||
+        name.includes('microsoft hazel');
+    });
+
+    // Fallback: pick any English voice that doesn't sound explicitly male
+    if (!femaleVoice) {
+      femaleVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        return voice.lang.startsWith('en') &&
+          !name.includes('david') &&
+          !name.includes('mark') &&
+          !name.includes('brad') &&
+          !name.includes('male');
+      });
+    }
+
+    if (femaleVoice) {
+      utterThis.voice = femaleVoice;
+    }
+
+    // Keep global reference to utterance to prevent garbage collection bug in Chromium
+    window.utterances = window.utterances || [];
+    window.utterances.push(utterThis);
+
+    utterThis.onstart = function () {
+      btn.classList.add('speaking');
+      btn.innerText = '🔇';
+    };
+
+    utterThis.onend = function () {
+      btn.classList.remove('speaking');
+      btn.innerText = '🔊';
+    };
+
+    utterThis.onerror = function () {
+      btn.classList.remove('speaking');
+      btn.innerText = '🔊';
+    };
+
+    // Bug workaround: slight timeout before speak if synth was recently cancelled
+    setTimeout(() => {
+      synth.speak(utterThis);
+    }, 50);
+  }
+
+  // Pre-load voices so they are ready when clicked
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = function () {
+      window.speechSynthesis.getVoices();
+      if (!sessionStorage.getItem('soulmate_intro_played')) {
+        setTimeout(playVoiceIntro, 500);
+      }
+    };
+    window.speechSynthesis.getVoices();
+  }
+
+  function playVoiceIntro() {
+    if (!window.speechSynthesis) return;
+    if (sessionStorage.getItem('soulmate_intro_played')) return;
+
+    const synth = window.speechSynthesis;
+    if (synth.speaking) return; // Prevent overlapping speech
+
+    const introText = "Welcome to SoulMate! I am your mental health chatbot. My purpose is to provide a safe and supportive space for you to share your feelings, guide you on mental well-being, and help you practice mindfulness. Let's embark on this journey together. How can I assist you today?";
+    const utterThis = new SpeechSynthesisUtterance(introText);
+    utterThis.lang = 'en-US';
+
+    const voices = synth.getVoices();
+    if (voices.length === 0) return; // Wait for onvoiceschanged
+
+    let femaleVoice = voices.find(voice => {
+      const name = voice.name.toLowerCase();
+      return name.includes('female') || name.includes('zira') || name.includes('samantha') || name.includes('victoria') || name.includes('susan') || name.includes('karen') || name.includes('tessa') || name.includes('microsoft hazel');
+    });
+
+    if (!femaleVoice) {
+      femaleVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        return voice.lang.startsWith('en') && !name.includes('david') && !name.includes('mark') && !name.includes('brad') && !name.includes('male');
+      });
+    }
+
+    if (femaleVoice) {
+      utterThis.voice = femaleVoice;
+    }
+
+    utterThis.onstart = function() {
+      sessionStorage.setItem('soulmate_intro_played', 'true');
+    };
+
+    utterThis.onerror = function(event) {
+      console.log('Voice intro error:', event.error);
+      if (event.error === 'not-allowed') {
+        // Autoplay is blocked by browser; wait for user interaction to retry
+        $(document).one('click keydown', function() {
+          if (!sessionStorage.getItem('soulmate_intro_played')) {
+            setTimeout(playVoiceIntro, 100);
+          }
+        });
+      }
+    };
+
+    window.utterances = window.utterances || [];
+    window.utterances.push(utterThis);
+
+    try {
+      synth.speak(utterThis);
+    } catch(e) {
+      console.error("Speech Synthesis Error:", e);
+    }
+  }
+
+  // Microphone button click handler
+  $(document).ready(function () {
+    // Attempt to play on ready, if voices are already loaded
+    setTimeout(() => {
+      if (window.speechSynthesis && window.speechSynthesis.getVoices().length > 0) {
+        playVoiceIntro();
+      }
+    }, 1000);
+
+
+    $("#mic-button").on("click", function () {
+      if (!recognition) {
+        alert("Your browser does not support speech recognition. Please use Chrome or Edge.");
+        return;
+      }
+
+      if (isListening) {
+        recognition.stop();
+        isListening = false;
+        $("#mic-icon").text("🎤");
+        $("#mic-button").removeClass("btn-danger").addClass("btn-outline-info");
+      } else {
+        recognition.start();
+        isListening = true;
+        $("#mic-icon").text("Wait");
+        $("#mic-button").removeClass("btn-outline-info").addClass("btn-danger");
+      }
+    });
+
+    // Listen for emotion detection event
+    window.addEventListener('emotionDetected', function(e) {
+      const emotionData = e.detail;
+      if (emotionData && emotionData.context) {
+        // Show emotion indicator in chat
+        showEmotionIndicator(emotionData);
+        
+        // Update input placeholder
+        const textInput = document.getElementById('textInput');
+        if (textInput) {
+          textInput.placeholder = `I'm feeling ${emotionData.emotion.toLowerCase()}...`;
+          textInput.dataset.detectedEmotion = emotionData.emotion;
+        }
+      }
+    });
+    
+    // Function to show emotion indicator
+    function showEmotionIndicator(emotionData) {
+      const context = emotionData.context;
+      const indicator = document.createElement('div');
+      indicator.id = 'current-emotion-indicator';
+      indicator.className = 'emotion-indicator mb-2';
+      indicator.innerHTML = `
+        <span class="emotion-badge" style="background: ${context.color}20; color: ${context.color}; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
+          <span>${context.icon}</span>
+          <span>Detected: ${emotionData.emotion}</span>
+          <button onclick="clearDetectedEmotion()" style="background: none; border: none; padding: 0; margin-left: 4px; cursor: pointer; font-size: 0.75rem;">✕</button>
+        </span>
+      `;
+      
+      // Remove existing indicator
+      const existing = document.getElementById('current-emotion-indicator');
+      if (existing) existing.remove();
+      
+      // Add to chat area
+      const chatArea = document.querySelector('.main-chat');
+      if (chatArea) {
+        chatArea.appendChild(indicator);
+        // Scroll to show
+        indicator.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+    
+    // Global function to clear detected emotion
+    window.clearDetectedEmotion = function() {
+      sessionStorage.removeItem('detected_emotion');
+      sessionStorage.removeItem('emotion_data');
+      const indicator = document.getElementById('current-emotion-indicator');
+      if (indicator) indicator.remove();
+      const textInput = document.getElementById('textInput');
+      if (textInput) {
+        textInput.placeholder = 'Share your thoughts... I\'m listening 💙';
+        delete textInput.dataset.detectedEmotion;
+      }
+    };
+    
+    //post request for chatting
+    $("#message-form").on("submit", function (event) {
+      const userMessage = $("#textInput").val();
+      if (!userMessage.trim()) return;
+      
+      // Get detected emotion if any
+      const detectedEmotion = sessionStorage.getItem('detected_emotion');
+      const emotionData = sessionStorage.getItem('emotion_data');
+      
+      appendMessage(USER_NAME, USER_IMG, "right", userMessage);
+      event.preventDefault();
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      // Hide quick replies while typing
+      $("#quick-replies").fadeOut(300);
+      
+      // Add sending animation to send button
+      $(".btn-send").addClass("sending");
+      
+      // Prepare data with emotion if available
+      const requestData = {
+        msg: userMessage,
+      };
+      
+      if (detectedEmotion) {
+        requestData.detected_emotion = detectedEmotion;
+        requestData.emotion_data = emotionData;
+      }
+      
+      $.ajax({
+        data: requestData,
+        type: "POST",
+        url: "/chat_messages",
+      }).done(function (data) {
+        // Hide typing indicator before showing response
+        hideTypingIndicator();
+        $(".btn-send").removeClass("sending");
+              
+        // Update language indicator if translation was used
+        if (data.was_translated && data.language_name) {
+          $("#detected-lang-name").text(data.language_name);
+          $("#language-indicator").fadeIn(300);
+        } else {
+          $("#language-indicator").fadeOut(300);
+        }
+              
+        // Small delay to make it feel natural, then animate the response
+        setTimeout(function() {
+          appendMessage(BOT_NAME, BOT_IMG, "left", data.msg, true); // true enables typing animation
+                
+          // Show quick replies again after response
+          setTimeout(() => {
+            $("#quick-replies").fadeIn(300);
+          }, Math.min(data.msg.length * 30, 2000)); // Wait for typing to finish
+        }, 500);
+      }).fail(function () {
+        hideTypingIndicator();
+        $(".btn-send").removeClass("sending");
+        appendMessage(BOT_NAME, BOT_IMG, "left", "I'm sorry, I'm having trouble responding right now. Please try again.", true);
+        $("#quick-replies").fadeIn(300);
+      });
+      
+      $("#textInput").val("");
+    });
+  });
+
+  function responseTopic(rawTitle) {
+    // post request for topic, bot will response with the content of the topic
+    event.preventDefault();
+    appendMessage(USER_NAME, USER_IMG, "right", rawTitle);
+    showTypingIndicator();
+    $("#quick-replies").fadeOut(300);
+    
+    $.ajax({
+      data: {
+        title: rawTitle,
+      },
+      type: "POST",
+      url: "/topic",
+    }).done(function (data) {
+      hideTypingIndicator();
+      const msgContent = data.contents;
+      if (msgContent.length == 1) {
+        setTimeout(function () {
+          appendMessage(BOT_NAME, BOT_IMG, "left", msgContent);
+          $("#quick-replies").fadeIn(300);
+        }, 500);
+      } else {
+        msgContent.forEach((msgContent, i) => {
+          setTimeout(function () {
+            if (i === 0) showTypingIndicator();
+            setTimeout(function() {
+              hideTypingIndicator();
+              appendMessage(BOT_NAME, BOT_IMG, "left", msgContent);
+              if (i === msgContent.length - 1) $("#quick-replies").fadeIn(300);
+            }, 500);
+          }, i * 8000);
+        });
+      }
+    }).fail(function() {
+      hideTypingIndicator();
+      appendMessage(BOT_NAME, BOT_IMG, "left", "I'm sorry, I couldn't retrieve that topic. Please try again.");
+      $("#quick-replies").fadeIn(300);
+    });
+  }
+
+
+
+
+  function responseTest(test_title) {
+    //post request for test, bot will response with the selected test
+    event.preventDefault();
+    appendMessage(USER_NAME, USER_IMG, "right", test_title);
+    showTypingIndicator();
+    $("#quick-replies").fadeOut(300);
+    
+    $.ajax({
+      data: {
+        title: test_title,
+      },
+      type: "POST",
+      url: "/test",
+    }).done(function (data) {
+      hideTypingIndicator();
+      setTimeout(function() {
+        appendTest(BOT_NAME, BOT_IMG, "left", data.questions, test_title);
+        $("#quick-replies").fadeIn(300);
+      }, 500);
+    }).fail(function() {
+      hideTypingIndicator();
+      appendMessage(BOT_NAME, BOT_IMG, "left", "I'm sorry, I couldn't load that test. Please try again.");
+      $("#quick-replies").fadeIn(300);
+    });
+  }
+
+  function responseExercise(exercise_title) {
+    //post request for exercise, bot will response with the selected mindfulness exercise
+    event.preventDefault();
+    appendMessage(USER_NAME, USER_IMG, "right", exercise_title);
+    showTypingIndicator();
+    $("#quick-replies").fadeOut(300);
+    
+    $.ajax({
+      data: {
+        title: exercise_title,
+      },
+      type: "POST",
+      url: "/mindfulness",
+    }).done(function (data) {
+      hideTypingIndicator();
+      setTimeout(function() {
+        appendExercise(BOT_NAME, BOT_IMG, "left", data.description, data.file_name);
+        $("#quick-replies").fadeIn(300);
+      }, 500);
+    }).fail(function() {
+      hideTypingIndicator();
+      appendMessage(BOT_NAME, BOT_IMG, "left", "I'm sorry, I couldn't load that exercise. Please try again.");
+      $("#quick-replies").fadeIn(300);
+    });
+  }
+
+  // Typing animation for bot messages
+  function typeWriterEffect(element, text, speed = 30) {
+    let i = 0;
+    element.innerHTML = '';
+    
+    function type() {
+      if (i < text.length) {
+        // Handle HTML tags
+        if (text.charAt(i) === '<') {
+          let tagEnd = text.indexOf('>', i);
+          if (tagEnd !== -1) {
+            element.innerHTML += text.substring(i, tagEnd + 1);
+            i = tagEnd + 1;
+          } else {
+            element.innerHTML += text.charAt(i);
+            i++;
+          }
+        } else {
+          element.innerHTML += text.charAt(i);
+          i++;
+        }
+        
+        // Scroll to keep up with typing
+        msgerChat.scrollTop = msgerChat.scrollHeight;
+        
+        // Variable speed for more natural feel
+        let delay = speed;
+        if (text.charAt(i) === '.' || text.charAt(i) === '!' || text.charAt(i) === '?') {
+          delay = speed * 4; // Pause longer at punctuation
+        } else if (text.charAt(i) === ',') {
+          delay = speed * 2;
+        }
+        
+        setTimeout(type, delay);
+      }
+    }
+    
+    type();
+  }
+
+  function appendMessage(name, img, side, text, animate = false) {
+    //append message to chatting area
+    const messageId = 'msg-' + Date.now();
+    const msgHTML = `
+    <div class="chat ${side}-msg" id="${messageId}">
+        <img src="${img}" class="chat-image">
+      <div class="chat-bubble ${side === 'left' ? 'glow-border' : ''}">
+        <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+          <div class="d-flex align-items-center gap-2">
+            <div class="chat-info-name">${name}</div>
+            <div class="chat-info-time">${formatDate(new Date())}</div>
+          </div>
+          ${side === 'left' ? '<button class="btn btn-sm btn-link listen-btn p-0 ms-2" title="Listen" onclick="listenMessage(this)" style="text-decoration:none; font-size:1.1rem;">🔊</button>' : ''}
+        </div>
+        <div class="chat-text ${animate ? 'typing-text' : ''}">${animate ? '' : text}</div>
+      </div>
+    </div>
+    `;
+    msgerChat.insertAdjacentHTML("beforeend", msgHTML);
+    msgerChat.scrollTop = msgerChat.scrollHeight;
+    
+    // Apply typing animation if requested
+    if (animate && side === 'left') {
+      const textElement = document.querySelector(`#${messageId} .chat-text`);
+      typeWriterEffect(textElement, text);
+    }
+    
+    // Update emotional indicator if present in response
+    updateEmotionalIndicator(text);
+  }
+  
+  // Update emotional state indicator in header
+  function updateEmotionalIndicator(text) {
+    const indicator = document.getElementById('emotional-indicator');
+    if (!indicator) return;
+    
+    const emotions = {
+      'anxious': { icon: '😰', label: 'Anxious' },
+      'sad': { icon: '😔', label: 'Sad' },
+      'angry': { icon: '😤', label: 'Angry' },
+      'happy': { icon: '😊', label: 'Happy' },
+      'confused': { icon: '😕', label: 'Confused' }
+    };
+    
+    const textLower = text.toLowerCase();
+    for (const [emotion, data] of Object.entries(emotions)) {
+      if (textLower.includes(emotion) || 
+          (emotion === 'anxious' && (textLower.includes('anxiety') || textLower.includes('worried'))) ||
+          (emotion === 'sad' && (textLower.includes('sadness') || textLower.includes('grief')))) {
+        indicator.textContent = `${data.icon} ${data.label}`;
+        indicator.style.opacity = '1';
+        setTimeout(() => {
+          indicator.style.opacity = '0';
+        }, 5000);
+        break;
+      }
+    }
+  }
+
+  function appendTest(name, img, side, questions, title) {
+    //append test to chatting area
+    id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const testHTML = `
+    <div class="chat ${side}-msg">
+        <img src="${img}" class="chat-image">
+      <div class="chat-bubble">
+        <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+          <div class="d-flex align-items-center gap-2">
+            <div class="chat-info-name">${name}</div>
+            <div class="chat-info-time">${formatDate(new Date())}</div>
+          </div>
+          ${side === 'left' ? '<button class="btn btn-sm btn-link listen-btn p-0 ms-2" title="Listen" onclick="listenMessage(this)" style="text-decoration:none; font-size:1.1rem;">🔊</button>' : ''}
+        </div>
+        <h5>${title}</h5>
+          <form class="test-form-${id}" onsubmit="handleSubmit(event,'${id}','${title}','${questions.length}')">  
+            <div class="test-questions">
+              ${questions.map((question, index) => `
+                <div>${question.question}</div>
+                <div class="options">
+                  ${question.options.map(option => `
+                      <div>
+                          <input class="form-check-input" type="radio" name="question${index + 1}" value="${option.points}">
+                          ${option.text}
+                          
+                      </div>
+                      
+                  `).join('')}
+                </div>
+                <hr>
+                `).join('')}  
+            </div>
+            <button class="btn btn-outline-secondary" type="submit">Submit</button>
+          </form>
+      </div>
+    </div>
+    `;
+    msgerChat.insertAdjacentHTML("beforeend", testHTML);
+    msgerChat.scrollTop += 500;
+  }
+
+  function handleSubmit(event, id, title, numQuestions) {
+    //handle the submit of test
+    event.preventDefault();
+    //get all selected radio buttons
+    const test = document.querySelector(`.test-form-${id}`);
+    const selected = test.querySelectorAll('input[type="radio"]:checked');
+
+    //check if all questions are answered
+    if (selected.length !== parseInt(numQuestions)) {
+      alert('Please answer all questions');
+      return;
+    }
+
+    test.style.pointerEvents = 'none';
+    //calculate total score
+    let score = 0;
+    selected.forEach(input => {
+      score += parseInt(input.value);
+    });
+
+    $.ajax({
+      data: {
+        score: score,
+        title: title,
+      },
+      type: "POST",
+      url: "/score",
+    }).done(function (data) {
+      appendMessage(BOT_NAME, BOT_IMG, "left", data.score_message);
+    });
+    //display score
+  }
+  function appendExercise(name, img, side, description, file_name) {
+    //append mindfulness exercise to chatting area
+    let audio_src = "/static/mindfulness/" + file_name;
+    const msgHTML = `
+  <div class="chat ${side}-msg">
+      <img src="${img}" class="chat-image">
+    <div class="chat-bubble">
+      <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+        <div class="d-flex align-items-center gap-2">
+          <div class="chat-info-name">${name}</div>
+          <div class="chat-info-time">${formatDate(new Date())}</div>
+        </div>
+        ${side === 'left' ? '<button class="btn btn-sm btn-link listen-btn p-0 ms-2" title="Listen" onclick="listenMessage(this)" style="text-decoration:none; font-size:1.1rem;">🔊</button>' : ''}
+      </div>
+      <div class="chat-text mb-2">${description}</div>
+      <audio id="music-player" controls>
+        <source src="${audio_src}" type="audio/mpeg">
+      </audio>
+    </div>
+  </div>
+  `;
+    msgerChat.insertAdjacentHTML("beforeend", msgHTML);
+    msgerChat.scrollTop += 500;
+  }
+
+  function get(selector, root = document) {
+    //get element by selector
+    return root.querySelector(selector);
+  }
+
+  function formatDate(date) {
+    //format date
+    const h = "0" + date.getHours();
+    const m = "0" + date.getMinutes();
+    return `${h.slice(-2)}:${m.slice(-2)}`;
+  }
+</script>

@@ -1,0 +1,372 @@
+{% extends 'layout.html'%}
+{%block style%}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/chat.css') }}" />
+{%endblock style%}
+
+{% block content%}
+<div id="chatbot" class="chatbot">
+  <!-- Sidebar Profile -->
+  <div id="chatbot-profile" class="chatbot-profile">
+    <button class="profile-close-btn d-lg-none" onclick="toggleProfile()" aria-label="Close profile">
+      <span>✕</span>
+    </button>
+    <div class="profile-glow"></div>
+    <div class="profile-image-container">
+      <img src="{{url_for('static',filename='images/image.jpg')}}" id="chatbot-image" class="rounded-circle" />
+      <div class="status-ring"></div>
+    </div>
+    <div class="profile-name">Soulmate</div>
+    <div class="profile-tagline">Your Mental Health Companion</div>
+    <div class="container d-flex flex-column gap-3 px-4 w-100">
+      <a class="btn btn-outline-primary w-100 btn-glow" href="{{url_for('main.about')}}">
+        <span>✨ About us</span>
+      </a>
+      <button type="button" class="btn btn-primary w-100 text-white btn-glow" data-bs-toggle="popover" data-bs-title="Help"
+        data-bs-placement="top"
+        data-bs-content="Start the conversation by typing a greeting or ask a question (E.g. What is Mental Health, What is the cause of depression). You can also select a specific topic, test or exercise through the tab above the text input box.">
+        <span>💡 Need Help?</span>
+      </button>
+      <button type="button" class="btn btn-primary w-100 text-white btn-glow" data-bs-toggle="popover" data-bs-title="Subject List"
+        data-bs-placement="bottom"
+        data-bs-content="I talk about Mental Health, Addiction, Anxiety, Depression, Disorders, Feelings, Loneliness, Medication, Meditation, Mindfulness, Personal growth, Phobia, Self-care, Sleep, Stress, Suicide, Trauma and more.">
+        <span>🌟 Our Services</span>
+      </button>
+      <div class="text-center text-muted mt-3" style="font-size: 0.8rem;">
+        <span class="heart-beat">💙</span> Developed by <br><strong>Devanshi Kapadiya & Diya Varsadiya</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-icon pulse-glow">
+        <span class="wave-emoji">🤗</span>
+      </div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Soulmate</div>
+        <div class="chat-header-status">
+          <span class="status-dot breathing"></span>
+          <span class="status-text">Online</span>
+          <span class="emotional-indicator" id="emotional-indicator"></span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="language-indicator" id="language-indicator" title="Detected Language" style="display: none;">
+          <span class="lang-flag">🌐</span>
+          <span class="lang-name" id="detected-lang-name">English</span>
+        </div>
+        <button class="header-btn" id="theme-toggle" title="Toggle Theme">
+          <span>🌙</span>
+        </button>
+        <button class="header-btn" id="sound-toggle" title="Toggle Sound">
+          <span>🔊</span>
+        </button>
+        <button class="header-btn d-lg-none" id="profile-toggle" title="Toggle Profile" onclick="toggleProfile()">
+          <span>👤</span>
+        </button>
+      </div>
+    </div>
+
+    <main id="main-chat" class="main-chat">
+      {% if current_user.is_authenticated and messages %}
+      {%for message in messages%}
+      {%if message.sender == 'user'%}
+      <div class="chat right-msg" id="chat-msg-{{message.id}}">
+        <img src="{{url_for('static',filename='profile_images/'+current_user.profile_image)}}" class="chat-image" />
+        <div class="chat-bubble position-relative">
+          <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+            <div class="d-flex align-items-center gap-2">
+              <div class="chat-info-name">You</div>
+              <div class="chat-info-time">{{message.timestamp.strftime('%d/%m/%Y, %H:%M')}}</div>
+            </div>
+            <button class="btn btn-sm btn-link text-muted p-0 ms-2" title="Edit Message"
+              onclick="enableEditMessage({{message.id}})" style="text-decoration:none;">✎</button>
+          </div>
+          <div class="chat-text" id="chat-text-{{message.id}}">
+            {{message.message}}
+          </div>
+          <div class="chat-edit-form" id="chat-edit-{{message.id}}" style="display:none;">
+            <textarea class="form-control form-control-sm mb-2" id="chat-input-{{message.id}}"
+              rows="2">{{message.message}}</textarea>
+            <div class="d-flex justify-content-end gap-2">
+              <button class="btn btn-sm btn-light border" onclick="cancelEditMessage({{message.id}})">Cancel</button>
+              <button class="btn btn-sm btn-primary px-3" onclick="saveEditedMessage({{message.id}})">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%else%}
+      <div class="chat left-msg">
+        <img src="{{url_for('static',filename='images/image.jpg')}}" class="chat-image" />
+        <div class="chat-bubble">
+          <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+            <div class="d-flex align-items-center gap-2">
+              <div class="chat-info-name">SoulMate</div>
+              <div class="chat-info-time">{{message.timestamp.strftime('%d/%m/%Y, %H:%M')}}</div>
+            </div>
+            <button class="btn btn-sm btn-link listen-btn p-0 ms-2" title="Listen" onclick="listenMessage(this)"
+              style="text-decoration:none; font-size:1.1rem;">🔊</button>
+          </div>
+          <div class="chat-text">
+            {{message.message}}
+          </div>
+        </div>
+      </div>
+      {%endif%}
+      {%endfor%}
+      <hr>
+      {%endif%}
+
+      <p class="text-muted text-center mb-4" style="font-size: 0.85rem;">Today</p>
+
+      <!-- Typing Indicator -->
+      <div class="chat left-msg typing-indicator" id="typing-indicator">
+        <img src="{{url_for('static',filename='images/image.jpg')}}" class="chat-image" />
+        <div class="typing-indicator active">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="chat left-msg welcome-message">
+        <img src="{{url_for('static',filename='images/image.jpg')}}" class="chat-image" />
+        <div class="chat-bubble glow-border">
+          <div class="chat-info d-flex justify-content-between align-items-center mb-1">
+            <div class="d-flex align-items-center gap-2">
+              <div class="chat-info-name">Soulmate</div>
+              <div class="chat-info-time">now</div>
+            </div>
+            <button class="btn btn-sm btn-link listen-btn p-0 ms-2" title="Listen" onclick="listenMessage(this)"
+              style="text-decoration:none; font-size:1.1rem;">🔊</button>
+          </div>
+          {%if current_user.is_authenticated%}
+          <div class="chat-text typewriter-text">
+            <span class="welcome-greeting">Hi {{current_user.username}} 👋</span>
+            <br><br>
+            I'm <strong>Soulmate</strong>, your personal mental health companion. I'm here to listen, support, and walk alongside you on your wellness journey.
+            <br><br>
+            <span class="disclaimer-text">💙 While I'm here to help, I'm not a replacement for professional care when you need it.</span>
+            <br><br>
+            <span class="prompt-text">How are you feeling right now? I'm here for you. 🤗</span>
+          </div>
+          {%else%}
+          <div class="chat-text typewriter-text">
+            <span class="welcome-greeting">Hello there! 👋</span>
+            <br><br>
+            I'm <strong>Soulmate</strong>, your personal mental health companion. I'm here to listen, support, and walk alongside you on your wellness journey.
+            <br><br>
+            <span class="disclaimer-text">💙 While I'm here to help, I'm not a replacement for professional care when you need it.</span>
+            <br><br>
+            <span class="prompt-text">How are you feeling today? I'm here for you. 🤗</span>
+          </div>
+          {%endif%}
+        </div>
+      </div>
+    </main>
+
+    <script>
+      let element = document.getElementById("main-chat");
+      setTimeout(() => {
+        element.scrollTop = element.scrollHeight;
+      }, 100); 
+    </script>
+
+    <div>
+      <!-- Quick Reply Buttons -->
+      <div class="quick-replies" id="quick-replies">
+        <button class="quick-reply-btn ripple" onclick="sendQuickReply('I need to vent')">
+          <span class="btn-icon">😤</span>
+          <span class="btn-text">I need to vent</span>
+        </button>
+        <button class="quick-reply-btn ripple" onclick="sendQuickReply('I\'m feeling anxious')">
+          <span class="btn-icon">😰</span>
+          <span class="btn-text">I'm feeling anxious</span>
+        </button>
+        <button class="quick-reply-btn ripple" onclick="sendQuickReply('I feel sad')">
+          <span class="btn-icon">😔</span>
+          <span class="btn-text">I feel sad</span>
+        </button>
+        <button class="quick-reply-btn ripple" onclick="sendQuickReply('I need help relaxing')">
+          <span class="btn-icon">🧘</span>
+          <span class="btn-text">I need help relaxing</span>
+        </button>
+        <button class="quick-reply-btn ripple" onclick="sendQuickReply('Tell me something positive')">
+          <span class="btn-icon">✨</span>
+          <span class="btn-text">Something positive</span>
+        </button>
+      </div>
+
+      <div class="tools">
+        <div class="btn-group dropup">
+          <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Topics 📜
+          </button>
+          <ul class="dropdown-menu shadow-sm border-0 rounded-3">
+            {% for topic in (topics.topics)%}
+            <li>
+              <button class="dropdown-item" onclick="responseTopic('{{topic.title}}')">
+                {{topic.title}}
+              </button>
+            </li>
+            {% endfor%}
+          </ul>
+        </div>
+
+        <div class="btn-group dropup">
+          <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Tests 📝
+          </button>
+          <ul class="dropdown-menu shadow-sm border-0 rounded-3">
+            {% for test in (tests.tests)%}
+            <li>
+              <button class="dropdown-item" id="test-button-{{test.title}}" onclick="responseTest('{{test.title}}')">
+                {{test.title}}
+              </button>
+            </li>
+            {% endfor%}
+          </ul>
+        </div>
+
+        <div class="btn-group dropup">
+          <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Mindfulness 🎧
+          </button>
+          <ul class="dropdown-menu shadow-sm border-0 rounded-3">
+            {% for exercise in (mindfulness_exercises.mindfulness_exercises) %}
+            <li>
+              <button class="dropdown-item" id="exercise-{{exercise.title}}"
+                onclick="responseExercise('{{exercise.title}}')">
+                {{exercise.title}}
+              </button>
+            </li>
+            {%endfor%}
+          </ul>
+        </div>
+      </div>
+
+      <form id="message-form" class="chat-inputarea" image_file={{ current_user.profile_image if
+        current_user.is_authenticated else "download.jpg" }}>
+        <div class="input-wrapper">
+          <input type="text" class="chat-input" id="textInput" autocomplete="off"
+            placeholder="Share your thoughts... I'm listening 💙" />
+          <div class="input-focus-border"></div>
+        </div>
+        <div class="voice-input-wrapper">
+          <select id="mic-language" class="mic-language-select" title="Select Voice Language">
+            <option value="en-US">🇺🇸 EN</option>
+            <option value="hi-IN">🇮🇳 HI</option>
+            <option value="gu-IN">🇮🇳 GU</option>
+          </select>
+          <button type="button" id="mic-button" class="btn btn-light rounded-circle shadow-sm btn-mic" title="Voice Input">
+            <span id="mic-icon" class="mic-pulse">🎤</span>
+          </button>
+        </div>
+        <button type="submit" class="btn-send btn-glow-send" title="Send">
+          <svg class="send-icon" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+          </svg>
+          <div class="send-ripple"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Emotion Detection Modal and Button -->
+  {% include "chat/emotion_detector.html" %}
+  
+  {%include "chat/send_function.html"%}
+</div>
+<script>
+  function enableEditMessage(msgId) {
+    document.getElementById(`chat-text-${msgId}`).style.display = 'none';
+    document.getElementById(`chat-edit-${msgId}`).style.display = 'block';
+  }
+
+  function cancelEditMessage(msgId) {
+    document.getElementById(`chat-text-${msgId}`).style.display = 'block';
+    document.getElementById(`chat-edit-${msgId}`).style.display = 'none';
+    const textDiv = document.getElementById(`chat-text-${msgId}`);
+    const textarea = document.getElementById(`chat-input-${msgId}`);
+    textarea.value = textDiv.innerText.trim();
+  }
+
+  async function saveEditedMessage(msgId) {
+    const newText = document.getElementById(`chat-input-${msgId}`).value;
+    if (!newText.trim()) return;
+
+    try {
+      const response = await fetch('/edit_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message_id: msgId,
+          new_text: newText
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        document.getElementById(`chat-text-${msgId}`).innerText = newText;
+        cancelEditMessage(msgId);
+      } else {
+        alert(data.msg || "Failed to update message");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating message");
+    }
+  }
+
+  // Quick Reply Function
+  function sendQuickReply(message) {
+    const input = document.getElementById('textInput');
+    input.value = message;
+    // Trigger form submission
+    const form = document.getElementById('message-form');
+    const submitEvent = new Event('submit', { cancelable: true });
+    form.dispatchEvent(submitEvent);
+  }
+
+  // Show/Hide Typing Indicator
+  function showTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+      indicator.style.display = 'flex';
+      // Scroll to bottom
+      const mainChat = document.getElementById('main-chat');
+      mainChat.scrollTop = mainChat.scrollHeight;
+    }
+  }
+
+  function hideTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+      indicator.style.display = 'none';
+    }
+  }
+
+  // Toggle Profile Sidebar on Mobile
+  function toggleProfile() {
+    const profile = document.getElementById('chatbot-profile');
+    profile.classList.toggle('profile-visible');
+  }
+
+  // Auto-hide profile on mobile when clicking outside
+  document.addEventListener('click', function(e) {
+    const profile = document.getElementById('chatbot-profile');
+    const toggleBtn = document.getElementById('profile-toggle');
+    if (profile && toggleBtn && !profile.contains(e.target) && !toggleBtn.contains(e.target)) {
+      profile.classList.remove('profile-visible');
+    }
+  });
+</script>
+{%endblock content%}
