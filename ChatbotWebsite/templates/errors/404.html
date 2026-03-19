@@ -1,11 +1,13 @@
 {%extends "layout.html"%}
 {%block content%}
-<div class="container-fluid d-grid">
-    <h1
-      class="mt-2 mb-2 fw-bold font-monospace"
-    >
-    Oops. Page Not Found (Error 404)
-    </h1>
-        <p>That page does not exist. Please try a different location</p>
-    </div>
+<div class="container py-5 text-center mt-5">
+    <div class="display-1 fw-bold text-muted opacity-25 mb-0">404</div>
+    <h1 class="fw-bold mb-3" style="color: var(--text-color);">Oops! Page Not Found</h1>
+    <p class="text-muted lead mx-auto mb-5" style="max-width: 500px;">
+        It seems the page you are looking for has been moved or doesn't exist. Let's get you back on track.
+    </p>
+    <a href="{{url_for('main.home')}}" class="btn btn-primary rounded-pill px-5 py-2 fw-semibold shadow-sm" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); border: none;">
+        Return Home
+    </a>
+</div>
 {%endblock content%}
