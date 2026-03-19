@@ -1,0 +1,274 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">
+        <i class="fas fa-brain text-primary me-2"></i>AI Learning Dashboard
+      </h2>
+      <p class="text-muted mb-0">Self-learning system analysis and model training</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <!-- Total Intents -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                <i class="fas fa-tags text-primary fs-4"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Total Intents</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.total_intents }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Patterns -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                <i class="fas fa-comments text-success fs-4"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Total Patterns</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.total_patterns }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Responses -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                <i class="fas fa-reply text-info fs-4"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Total Responses</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.total_responses }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unique Keywords -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                <i class="fas fa-key text-warning fs-4"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Unique Keywords</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.unique_keywords }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training Status -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 py-3">
+          <h5 class="mb-0 fw-bold">
+            <i class="fas fa-robot me-2"></i>Model Training
+          </h5>
+        </div>
+        <div class="card-body">
+          {% if training_info %}
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Last Trained</p>
+              <p class="fw-bold">{{ training_info.timestamp[:10] if training_info.timestamp else 'Never' }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Epochs Completed</p>
+              <p class="fw-bold">{{ training_info.epochs_trained }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Training Accuracy</p>
+              <p class="fw-bold text-success">{{ "%.2f"|format(training_info.final_accuracy * 100) }}%</p>
+            </div>
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Validation Accuracy</p>
+              <p class="fw-bold text-success">{{ "%.2f"|format(training_info.val_accuracy * 100) }}%</p>
+            </div>
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No training information available.
+          </div>
+          {% endif %}
+
+          <form action="{{ url_for('admin.train_model') }}" method="POST" class="d-flex gap-2">
+            <button type="submit" name="mode" value="quick" class="btn btn-outline-primary">
+              <i class="fas fa-bolt me-1"></i>Quick Train (50 epochs)
+            </button>
+            <button type="submit" name="mode" value="full" class="btn btn-primary">
+              <i class="fas fa-sync me-1"></i>Full Train (200 epochs)
+            </button>
+            <button type="submit" name="mode" value="auto" class="btn btn-success">
+              <i class="fas fa-magic me-1"></i>Train with Learning Data
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 py-3">
+          <h5 class="mb-0 fw-bold">
+            <i class="fas fa-chart-pie me-2"></i>Learning Stats
+          </h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>User Patterns</span>
+              <span class="badge bg-primary rounded-pill">{{ learning_stats.total_user_patterns }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>Failed Queries</span>
+              <span class="badge bg-warning rounded-pill">{{ learning_stats.total_failed_queries }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>New Patterns</span>
+              <span class="badge bg-success rounded-pill">{{ learning_stats.total_new_patterns }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>Response Feedback</span>
+              <span class="badge bg-info rounded-pill">{{ learning_stats.total_response_feedback }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Learning Suggestions -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 py-3">
+      <h5 class="mb-0 fw-bold">
+        <i class="fas fa-lightbulb me-2"></i>Learning Suggestions
+      </h5>
+    </div>
+    <div class="card-body">
+      {% if suggestions %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Content</th>
+              <th>Intent</th>
+              <th>Confidence</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for suggestion in suggestions %}
+            <tr>
+              <td>
+                {% if suggestion.type == 'add_pattern' %}
+                <span class="badge bg-primary">Pattern</span>
+                {% else %}
+                <span class="badge bg-info">Response</span>
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 300px;">
+                {{ suggestion.pattern if suggestion.pattern else suggestion.response }}
+              </td>
+              <td><span class="badge bg-secondary">{{ suggestion.intent }}</span></td>
+              <td>
+                {% if suggestion.confidence %}
+                <div class="progress" style="width: 100px;">
+                  <div class="progress-bar" role="progressbar" style="width: {{ suggestion.confidence * 100 }}%">
+                    {{ "%.0f"|format(suggestion.confidence * 100) }}%
+                  </div>
+                </div>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <form action="{{ url_for('admin.approve_suggestion') }}" method="POST" class="d-inline">
+                  <input type="hidden" name="suggestion_index" value="{{ loop.index0 }}">
+                  <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info mb-0">
+        <i class="fas fa-info-circle me-2"></i>No learning suggestions available. Run analysis to generate suggestions.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Intent Distribution -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 py-3">
+      <h5 class="mb-0 fw-bold">
+        <i class="fas fa-chart-bar me-2"></i>Intent Distribution
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        {% for intent, count in stats.patterns_per_intent.items() %}
+        <div class="col-md-4 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-medium">{{ intent }}</span>
+            <span class="badge bg-primary">{{ count }} patterns</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar" role="progressbar" 
+                 style="width: {{ (count / stats.total_patterns * 100) if stats.total_patterns > 0 else 0 }}%">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1" style="color: var(--text-color); letter-spacing: -0.5px;">Feedback Management</h2>
+      <p class="text-muted small mb-0 opacity-75">Review, approve, and manage community testimonials.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light rounded-pill px-4 py-2 fw-medium shadow-sm d-inline-flex align-items-center gap-2" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Dashboard
+      </a>
+      <a href="{{ url_for('main.desktop_screen') }}" target="_blank" class="btn btn-primary rounded-pill px-4 py-2 fw-medium shadow-sm d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); border: none; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        View Display
+      </a>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 d-flex gap-2" id="feedbackTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active rounded-pill fw-medium d-flex align-items-center gap-2 px-4 py-2 shadow-sm border border-0" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending" type="button" role="tab" style="transition: all 0.2s;">
+        Pending Approval 
+        <span class="badge rounded-pill bg-light text-muted ms-1">{{ pending_feedback|length }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-medium d-flex align-items-center gap-2 px-4 py-2 shadow-sm border border-0" id="approved-tab" data-bs-toggle="pill" data-bs-target="#approved" type="button" role="tab" style="background: var(--card-bg); color: var(--text-color); transition: all 0.2s;">
+        Approved
+        <span class="badge rounded-pill" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">{{ approved_feedback|length }}</span>
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="feedbackTabsContent">
+    <!-- Pending Feedback Tab -->
+    <div class="tab-pane fade show active" id="pending" role="tabpanel">
+      {% if pending_feedback %}
+        <div class="row g-4">
+          {% for feedback in pending_feedback %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 rounded-4 shadow-sm" style="background: var(--card-bg); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+              <div class="card-header border-bottom py-3 px-4 bg-transparent d-flex justify-content-between align-items-center" style="border-color: var(--border-color) !important;">
+                <div>
+                  <h6 class="mb-0 fw-bold" style="color: var(--text-color);">Submission #{{ feedback.id }}</h6>
+                  <small class="text-muted opacity-75">{{ feedback.timestamp.strftime("%b %d, %Y - %H:%M") }}</small>
+                </div>
+                {% if feedback.user_id %}
+                  <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 35px; height: 35px;" title="User ID: {{ feedback.user_id }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </div>
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-secondary rounded-circle" style="width: 35px; height: 35px;" title="Anonymous User">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="card-body p-4 d-flex flex-column">
+                <div class="mb-3">
+                  <div class="d-flex align-items-center gap-1 mb-2">
+                    {% for i in range(1, 6) %}
+                      {% if i <= feedback.rating %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {% else %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% if feedback.notes %}
+                <div class="mb-4 flex-grow-1">
+                  <p class="mb-0 text-muted fst-italic" style="font-size: 0.95rem; line-height: 1.6;">"{{ feedback.notes }}"</p>
+                </div>
+                {% else %}
+                <div class="mb-4 flex-grow-1 d-flex align-items-center">
+                  <span class="text-muted small opacity-50">No written feedback provided.</span>
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2 mt-auto pt-3 border-top" style="border-color: var(--border-color) !important;">
+                  <form method="POST" action="{{ url_for('admin.approve_feedback', feedback_id=feedback.id) }}" class="flex-grow-1">
+                    <button type="submit" class="btn w-100 rounded-pill fw-semibold shadow-sm" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">Approve</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('admin.reject_feedback', feedback_id=feedback.id) }}">
+                    <button type="submit" class="btn rounded-pill border-0 bg-danger bg-opacity-10 text-danger" onclick="return confirm('Are you sure you want to reject and delete this feedback?')" title="Reject completely">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-5 rounded-4 border" style="background: var(--card-bg); border-color: var(--border-color) !important;">
+          <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">✅</div>
+          <h5 class="fw-bold mb-1" style="color: var(--text-color);">All Caught Up!</h5>
+          <p class="text-muted mb-0">There are no pending feedbacks to review.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Approved Feedback Tab -->
+    <div class="tab-pane fade" id="approved" role="tabpanel">
+      {% if approved_feedback %}
+        <div class="row g-4">
+          {% for feedback in approved_feedback %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 rounded-4 shadow-sm" style="background: var(--card-bg); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+              <div class="card-header border-bottom py-3 px-4 bg-transparent d-flex justify-content-between align-items-center" style="border-color: var(--border-color) !important;">
+                <div>
+                  <h6 class="mb-0 fw-bold" style="color: var(--text-color);">Submission #{{ feedback.id }}</h6>
+                  <small class="text-muted opacity-75">{{ feedback.timestamp.strftime("%b %d, %Y - %H:%M") }}</small>
+                </div>
+                <div>
+                  {% if feedback.is_published %}
+                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>Published</span>
+                  {% else %}
+                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>Unpublished</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="card-body p-4 d-flex flex-column">
+                <div class="mb-3">
+                  <div class="d-flex align-items-center gap-1 mb-2">
+                    {% for i in range(1, 6) %}
+                      {% if i <= feedback.rating %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {% else %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% if feedback.notes %}
+                <div class="mb-4 flex-grow-1">
+                  <p class="mb-0 text-muted fst-italic" style="font-size: 0.95rem; line-height: 1.6;">"{{ feedback.notes }}"</p>
+                </div>
+                {% else %}
+                <div class="mb-4 flex-grow-1 d-flex align-items-center">
+                  <span class="text-muted small opacity-50">No written feedback provided.</span>
+                </div>
+                {% endif %}
+                <div class="mt-auto pt-3 border-top" style="border-color: var(--border-color) !important;">
+                  {% if feedback.is_published %}
+                    <form method="POST" action="{{ url_for('admin.unpublish_feedback', feedback_id=feedback.id) }}">
+                      <button type="submit" class="btn w-100 rounded-pill fw-semibold shadow-sm" style="background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color);">Unpublish Desktop</button>
+                    </form>
+                  {% else %}
+                    <form method="POST" action="{{ url_for('admin.publish_feedback', feedback_id=feedback.id) }}">
+                      <button type="submit" class="btn w-100 rounded-pill fw-semibold shadow-sm text-white" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6); border: none;">Publish to Desktop</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-5 rounded-4 border" style="background: var(--card-bg); border-color: var(--border-color) !important;">
+          <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📂</div>
+          <h5 class="fw-bold mb-1" style="color: var(--text-color);">No Approved Feedback</h5>
+          <p class="text-muted mb-0">Approve pending feedbacks to see them here.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple script to update tab styles on click based on the new pill design
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('#feedbackTabs button[data-bs-toggle="pill"]');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('shown.bs.tab', function (event) {
+        tabs.forEach(t => {
+          t.style.background = 'var(--card-bg)';
+          t.style.color = 'var(--text-color)';
+        });
+        event.target.style.background = 'linear-gradient(135deg, #0ea5e9, #6366f1)';
+        event.target.style.color = 'white';
+      });
+      // Set initial active state correctly if missed by CSS
+      if(tab.classList.contains('active')) {
+          tab.style.background = 'linear-gradient(135deg, #0ea5e9, #6366f1)';
+          tab.style.color = 'white';
+      }
+    });
+  });
+</script>
+{% endblock content %}
+

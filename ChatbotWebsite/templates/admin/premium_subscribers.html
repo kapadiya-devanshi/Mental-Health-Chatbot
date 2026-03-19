@@ -1,0 +1,223 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 class="fw-bold">💎 Premium Subscribers</h1>
+      <p class="text-muted mb-0">Manage premium subscriptions and view revenue</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);">
+        <div class="card-body p-4 text-center">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">👥</div>
+          <h3 class="fw-bold mb-1" style="color: #5c4b00;">{{ total_subscribers }}</h3>
+          <p class="mb-0 fw-medium" style="color: #5c4b00; opacity: 0.8;">Total Subscribers</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4 text-center">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">🌟</div>
+          <h3 class="fw-bold mb-1 text-primary">{{ plus_count }}</h3>
+          <p class="mb-0 text-muted">Plus Plans</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: var(--card-bg);">
+        <div class="card-body p-4 text-center">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">👑</div>
+          <h3 class="fw-bold mb-1" style="color: #8b5cf6;">{{ pro_count }}</h3>
+          <p class="mb-0 text-muted">Pro Plans</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 rounded-4 shadow-sm h-100" style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%);">
+        <div class="card-body p-4 text-center">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
+          <h3 class="fw-bold mb-1 text-white">₹{{ "{:,.0f}".format(total_revenue) }}</h3>
+          <p class="mb-0 text-white" style="opacity: 0.9;">Total Revenue</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Revenue -->
+  <div class="card border-0 rounded-4 shadow-sm mb-5" style="background: var(--card-bg);">
+    <div class="card-body p-4 d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+          <span style="font-size: 1.5rem;">📈</span>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0">This Month's Revenue</h5>
+          <p class="text-muted mb-0">New subscriptions this month</p>
+        </div>
+      </div>
+      <h2 class="fw-bold text-success mb-0">₹{{ "{:,.0f}".format(monthly_revenue) }}</h2>
+    </div>
+  </div>
+
+  <!-- Active Subscriptions -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: var(--card-bg);">
+    <div class="card-header bg-transparent border-0 p-4">
+      <h4 class="fw-bold mb-0">🟢 Active Subscriptions</h4>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4 py-3">User</th>
+              <th>Plan</th>
+              <th>Billing</th>
+              <th>Amount</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th class="pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in active_subscriptions %}
+            <tr>
+              <td class="ps-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="{{ url_for('static', filename='profile_images/' + sub.user.profile_image) }}" 
+                       class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                  <div>
+                    <div class="fw-semibold">{{ sub.user.username }}</div>
+                    <div class="small text-muted">{{ sub.user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge rounded-pill {% if sub.plan_type == 'plus' %}bg-warning text-dark{% else %}bg-info{% endif %} px-3 py-2">
+                  {{ sub.plan_type.title() }}
+                </span>
+              </td>
+              <td>
+                <span class="text-capitalize">{{ sub.billing_cycle }}</span>
+              </td>
+              <td>
+                <span class="fw-semibold">₹{{ "{:,.0f}".format(sub.amount_paid) }}</span>
+              </td>
+              <td>
+                <span class="text-muted">{{ sub.start_date.strftime('%d %b %Y') }}</span>
+              </td>
+              <td>
+                <span class="text-muted">{{ sub.end_date.strftime('%d %b %Y') }}</span>
+              </td>
+              <td>
+                <span class="badge bg-success rounded-pill px-3 py-2">Active</span>
+              </td>
+              <td class="pe-4 text-end">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-light rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Actions
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('admin.user_details', user_id=sub.user.id) }}">
+                        👤 View User
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="{{ url_for('admin.analyze_user', user_id=sub.user.id) }}">
+                        📊 View Report
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <form method="POST" action="{{ url_for('admin.admin_cancel_subscription', sub_id=sub.id) }}" 
+                            onsubmit="return confirm('Are you sure you want to cancel this subscription?');">
+                        <button type="submit" class="dropdown-item text-danger">❌ Cancel Subscription</button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
+                <h5>No active subscriptions yet</h5>
+                <p class="mb-0">Premium subscribers will appear here</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inactive/Expired Subscriptions -->
+  <div class="card border-0 rounded-4 shadow-sm" style="background: var(--card-bg);">
+    <div class="card-header bg-transparent border-0 p-4">
+      <h4 class="fw-bold mb-0">🔴 Expired / Cancelled Subscriptions</h4>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4 py-3">User</th>
+              <th>Plan</th>
+              <th>Amount Paid</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in inactive_subscriptions %}
+            <tr class="text-muted">
+              <td class="ps-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <img src="{{ url_for('static', filename='profile_images/' + sub.user.profile_image) }}" 
+                       class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; opacity: 0.6;">
+                  <div>
+                    <div class="fw-medium">{{ sub.user.username }}</div>
+                    <div class="small">{{ sub.user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge rounded-pill bg-secondary px-3 py-2">{{ sub.plan_type.title() }}</span>
+              </td>
+              <td>₹{{ "{:,.0f}".format(sub.amount_paid) }}</td>
+              <td>{{ sub.start_date.strftime('%d %b %Y') }}</td>
+              <td>{{ sub.end_date.strftime('%d %b %Y') }}</td>
+              <td>
+                <span class="badge bg-secondary rounded-pill px-3 py-2">
+                  {% if sub.end_date < datetime.now() %}Expired{% else %}Cancelled{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                <p class="mb-0">No expired or cancelled subscriptions</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
